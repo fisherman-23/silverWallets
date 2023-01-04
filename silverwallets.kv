@@ -1,0 +1,59 @@
+SignUpScreen:
+<StartScreen>
+    BoxLayout:
+        orientation: "vertical"
+        Label:
+            text: "SilverWallets"
+            color: 1,0,1,1
+            size_hint: 1, .2
+        BoxLayout:
+            orientation: "vertical"
+            spacing: 50
+            padding: 100
+            Button:
+                text: "Sign Up"
+                id: signUp
+            
+            Button: 
+                text: "Log In"
+                id: logIn
+
+
+<SignUpScreen>
+    BoxLayout:
+        orientation: "vertical"
+        Label:
+            text: "Sign Up"
+            color: 1,0,1,1
+        TextInput:
+            id: signUpText
+            hint_text: "Enter email"
+            multiline: False
+            on_text_validate: root.on_text_validate_email(self)
+        TextInput:
+            hint_text: "Enter password"
+            multiline: False
+            on_text_validate: root.on_text_validate_pw(self)
+        Label:
+            text: "Set a expenditure limit you want to meet in a month"
+            color: 0,0,0,1
+        TextInput:
+            hint_text: "Enter amount in SGD"
+            multiline: False
+            input_filter: "float"
+            on_text_validate: root.on_text_validate_target(self) 
+        Button:
+            text: "CONFIRM"
+            color: 0,0,0,1     
+            background_normal: ''
+            background_color: 0.3, 0.9, 0.1, .85
+            on_released: 
+<MainWidget>:
+    Button:
+        text: "Sign Up"
+        size: "100dp", "80dp"
+	    pos: 50, 50
+    Button:
+        text: "Log In"        
+        size: "100dp", "80dp"
+	    pos: 50, 50
