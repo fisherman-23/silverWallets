@@ -1,5 +1,9 @@
-SignUpScreen:
+WindowManager:
+    StartScreen
+    LogInScreen
+    SignUpScreen
 <StartScreen>
+    name: "start"
     BoxLayout:
         orientation: "vertical"
         Label:
@@ -13,48 +17,97 @@ SignUpScreen:
             Button:
                 text: "Sign Up"
                 id: signUp
-            
+                on_release: 
+                    app.root.current = "signup"
+                    root.manager.transition.direction = "left"
             Button: 
                 text: "Log In"
                 id: logIn
-
-
-<SignUpScreen>
-    BoxLayout:
-        orientation: "vertical"
-        Label:
-            text: "Sign Up"
-            color: 1,0,1,1
-        TextInput:
-            id: signUpText
-            hint_text: "Enter email"
-            multiline: False
-            on_text_validate: root.on_text_validate_email(self)
-        TextInput:
-            hint_text: "Enter password"
-            multiline: False
-            on_text_validate: root.on_text_validate_pw(self)
-        Label:
-            text: "Monthly Expenditure Limit:"
-            color: 0,0,0,1
-            size_hint: 1,0.23
-        TextInput:
-            hint_text: "Enter amount in SGD"
-            multiline: False
-            input_filter: "float"
-            on_text_validate: root.on_text_validate_target(self) 
-        Label:
-            text: root.status_info
-            color: 0.5,0,0,1
-            size_hint: 1, 0.23
+                on_release: 
+                    app.root.current = "login"
+                    root.manager.transition.direction = "left"
+<LogInScreen>
+    name: "login"
+    FloatLayout:
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "Log In"
+                color: 0,0,1,1
+            TextInput:
+                hint_text: "Enter email"
+                multiline: False
+                on_text_validate: root.on_text_validate_email(self)
+            TextInput:
+                hint_text: "Enter password"
+                multiline: False
+                on_text_validate: root.on_text_validate_pw(self)
+            Label:
+                text: root.status_info
+                color: 0.5,0,0,1
+                size_hint: 1, 0.23
+            Button:
+                text: "CONFIRM"
+                color: 0,0,0,1     
+                background_normal: ''
+                background_color: 0.3, 0.9, 0.1, .85
+                on_press: 
+                    root.signup_to_firebase()
+            
         Button:
+            text: "Go Back"
+            size_hint: .15, .05
+            pos: 20, 1300
+            on_release: 
+                app.root.current = "start"
+                root.manager.transition.direction = "right"
+<SignUpScreen>
+    name: "signup"
+    FloatLayout:
+        BoxLayout:
+            orientation: "vertical"
+            Label:
+                text: "Sign Up"
+                color: 1,0,1,1
+            TextInput:
+                id: signUpText
+                hint_text: "Enter email"
+                multiline: False
+                on_text_validate: root.on_text_validate_email(self)
+            TextInput:
+                hint_text: "Enter password"
+                multiline: False
+                on_text_validate: root.on_text_validate_pw(self)
+            Label:
+                text: "Monthly Expenditure Limit:"
+                color: 0,0,0,1
+                size_hint: 1,0.23
+            TextInput:
+                hint_text: "Enter amount in SGD"
+                multiline: False
+                input_filter: "float"
+                on_text_validate: root.on_text_validate_target(self) 
+            Label:
+                text: root.status_info
+                color: 0.5,0,0,1
+                size_hint: 1, 0.23
+            Button:
 
-            text: "CONFIRM"
-            color: 0,0,0,1     
-            background_normal: ''
-            background_color: 0.3, 0.9, 0.1, .85
-            on_press: 
-                root.signup_to_firebase()
+                text: "CONFIRM"
+                color: 0,0,0,1     
+                background_normal: ''
+                background_color: 0.3, 0.9, 0.1, .85
+                on_press: 
+                    root.signup_to_firebase()
+        Button:
+            text: "Go Back"
+            size_hint: .15, .05
+            pos: 20, 1300
+            on_release: 
+                app.root.current = "start"
+                root.manager.transition.direction = "right"
+<HomeScreen>
+
 
 <MainWidget>:
     Button:
