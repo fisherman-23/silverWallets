@@ -1,7 +1,12 @@
 WindowManager:
+    
     StartScreen
     LogInScreen
     SignUpScreen
+    HomeScreen
+    NavigationScreen
+    InputScreen
+    HistoryScreen
 <StartScreen>
     name: "start"
     BoxLayout:
@@ -107,14 +112,34 @@ WindowManager:
                 app.root.current = "start"
                 root.manager.transition.direction = "right"
 <HomeScreen>
+    name: "home"
+    BoxLayout:
+        Label:
+            text: 'Home'
+            color: 0.2,0,0,1
+<NavigationScreen>
+    name: "navigate"
+    MDBottomNavigation:
+        MDBottomNavigationItem:
+            name: 'input'
+            InputScreen
+        MDBottomNavigationItem:
+            name: 'home'
+            HomeScreen
+        MDBottomNavigationItem:
+            name: 'history'
+            HistoryScreen
 
+
+<InputScreen>
+    BoxLayout:
+        Label:
+            text: "Input data"
+            color: 0,0,0.3,1
+<HistoryScreen>
+    BoxLayout:
+        Label:
+            text: "History"
+            color: 0,0.3,0,1
 
 <MainWidget>:
-    Button:
-        text: "Sign Up"
-        size: "100dp", "80dp"
-	    pos: 50, 50
-    Button:
-        text: "Log In"        
-        size: "100dp", "80dp"
-	    pos: 50, 50

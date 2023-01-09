@@ -10,6 +10,9 @@ from kivy.uix.button import Button
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
+from kivymd.app import MDApp
+from kivy.lang import Builder
+
 # import firestore
 # from firestore import Collection
 
@@ -26,7 +29,6 @@ db = firestore.client();
 
 userPW = '' 
 userEmail = ''
-
 def stringToDict(x):
     dictionary = dict(subString.split("=") for subString in x.split(";"))
     return(dictionary)
@@ -35,6 +37,14 @@ class WindowManager(ScreenManager):
     pass
 
 class StartScreen(Screen):
+    pass
+class HomeScreen(Screen):
+    pass
+class NavigationScreen(Screen):
+    pass
+class InputScreen(Screen):
+    pass
+class HistoryScreen(Screen):
     pass
 
 def LogInCheck(x,y):
@@ -74,12 +84,13 @@ class LogInScreen(Screen):
             else:
                 if LogInCheck(self.text_input_email, self.text_input_pw) == True:
                     self.status_info = "Correct, logging in"
+                    self.manager.current = "navigate"
                     
                 else:
                     self.status_info = "Incorrect Details"
                     
         except AttributeError:
-            print('a',self.text_input_email,self.text_input_pw)
+            #print('a',self.text_input_email,self.text_input_pw)
             self.status_info = "Please fill in the fields"
 
 class SignUpScreen(Screen): #screen property allows switch between, layout nested inside
@@ -121,13 +132,13 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
         except AttributeError:
             self.status_info = "Please fill in the fields"
         
-class HomeScreen(Screen):
-    pass
+
 
 class MainWidget(Widget):
     pass
 
-class SilverWalletsApp(App):
+class SilverWalletsApp(MDApp):
     pass
+    
 
 SilverWalletsApp().run()
