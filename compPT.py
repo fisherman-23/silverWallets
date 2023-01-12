@@ -12,7 +12,11 @@ from firebase_admin import credentials, firestore
 import os
 from kivymd.app import MDApp
 from kivy.lang import Builder
-
+from kivy.clock import Clock
+from kivy.uix.tabbedpanel import TabbedPanel
+import requests
+from kivy.uix.camera import Camera
+import time
 # import firestore
 # from firestore import Collection
 
@@ -26,6 +30,7 @@ default_app = firebase_admin.initialize_app(cred_obj, {
 });
 # app = firebase_admin.initialize_app();
 db = firestore.client();
+receiptOcrEndpoint = 'https://ocr.asprise.com/api/v1/receipt'
 
 userPW = '' 
 userEmail = ''
@@ -39,17 +44,49 @@ class WindowManager(ScreenManager):
 class StartScreen(Screen):
     pass
 class HomeScreen(Screen):
-    pass
+
+    welcome_text = StringProperty("")
+    
+    def __init__(self,**kwargs): 
+        super(HomeScreen, self).__init__(**kwargs)
+        Clock.schedule_interval(self.welcomeString, 1) #need this to constaly update the screen as everything will be run at startup once
+    def welcomeString(self,dt):
+        self.welcome_text = 'Welcome {},'.format(userEmail.split('@')[0])
+        print(self.welcome_text)
+        print(userEmail,'1')
+
+    
 class NavigationScreen(Screen):
     pass
 class InputScreen(Screen):
     pass
 class HistoryScreen(Screen):
     pass
-
+class CameraScreen(Screen):
+    def capture(self):
+        '''
+        Function to capture the images and give them the names
+        according to their captured time and date.
+        '''
+        camera = self.ids['camera']
+        timestr = time.strftime("%Y%m%d_%H%M%S")
+        temp = "IMG_{}.png".format(timestr)
+        camera.export_to_png(temp)
+        print("Captured")
+        imageFile = temp
+        r = requests.post(receiptOcrEndpoint, data = { \
+        'api_key': 'TEST',        # Use 'TEST' for testing purpose \
+        'recognizer': 'auto',       # can be 'US', 'CA', 'JP', 'SG' or 'auto' \
+        'ref_no': 'ocr_python_123', # optional caller provided ref code \
+        }, \
+        files = {"file": open(imageFile, "rb")})
+        print(r.text)
+class PostCameraScreen(Screen):
+    #screen for after reciept captured
+    pass 
 def LogInCheck(x,y):
     doc_ref = db.collection(u'accounts').document(x)
-    if doc_ref.get().exists:
+    if doc_ref.get().exists: #checks if doc exists before proceeding to avoid crash
         #now check for password 
         data = doc_ref.get().to_dict()
         pw = data.get(' pw ')
@@ -83,6 +120,7 @@ class LogInScreen(Screen):
                 self.status_info = "Error! Empty fields."
             else:
                 if LogInCheck(self.text_input_email, self.text_input_pw) == True:
+                    userEmail = self.text_input_email
                     self.status_info = "Correct, logging in"
                     self.manager.current = "navigate"
                     

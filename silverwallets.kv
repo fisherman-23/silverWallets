@@ -1,5 +1,5 @@
 WindowManager:
-    
+    id: window_manager
     StartScreen
     LogInScreen
     SignUpScreen
@@ -7,6 +7,8 @@ WindowManager:
     NavigationScreen
     InputScreen
     HistoryScreen
+    CameraScreen
+    PostCameraScreen
 <StartScreen>
     name: "start"
     BoxLayout:
@@ -58,14 +60,16 @@ WindowManager:
                 background_color: 0.3, 0.9, 0.1, .85
                 on_press: 
                     root.signup_to_firebase()
-            
-        Button:
-            text: "Go Back"
-            size_hint: .15, .05
-            pos: 20, 1300
-            on_release: 
-                app.root.current = "start"
-                root.manager.transition.direction = "right"
+        AnchorLayout:
+            anchor_x: 'left'
+            anchor_y: 'top'
+            Button:
+                text: "Go Back"
+                size_hint: .15, .05
+                
+                on_release: 
+                    app.root.current = "start"
+                    root.manager.transition.direction = "right"
 <SignUpScreen>
     name: "signup"
     FloatLayout:
@@ -104,42 +108,102 @@ WindowManager:
                 background_color: 0.3, 0.9, 0.1, .85
                 on_press: 
                     root.signup_to_firebase()
-        Button:
-            text: "Go Back"
-            size_hint: .15, .05
-            pos: 20, 1300
-            on_release: 
-                app.root.current = "start"
-                root.manager.transition.direction = "right"
+        AnchorLayout:
+            anchor_x: 'left'
+            anchor_y: 'top'
+            Button:
+                text: "Go Back"
+                size_hint: .15, .05
+                on_release: 
+                    app.root.current = "start"
+                    root.manager.transition.direction = "right"
 <HomeScreen>
     name: "home"
     BoxLayout:
-        Label:
-            text: 'Home'
-            color: 0.2,0,0,1
+        AnchorLayout:
+            
+            anchor_x: 'left'
+            anchor_y: 'top'
+            Label:
+                size_hint: 1,None
+                text: root.welcome_text
+                font_size: "50"
+                color: 0, 0, 0.3, 1
+        AnchorLayout:
+            anchor_x: 'right'
+            anchor_y: 'top'
+            Button:
+                text: "Settings"
+                size_hint: .35, .05
+                on_press: root.switch_tab
 <NavigationScreen>
+    
     name: "navigate"
     MDBottomNavigation:
+        id: bottom_nav
         MDBottomNavigationItem:
             name: 'input'
+            text: "Input"
             InputScreen
+
         MDBottomNavigationItem:
+            
             name: 'home'
+            text: "Home"
             HomeScreen
         MDBottomNavigationItem:
             name: 'history'
+            text: "History"
             HistoryScreen
-
+<CameraScreen>
+    name: "camera"
+    BoxLayout:
+        orientation: "vertical"
+        AnchorLayout:
+            anchor_x: "left"
+            anchor_y: "top"
+            Button:
+                text: "back"
+                size_hint: 0.3, 0.05
+                on_press: 
+                    app.root.current = "navigate"
+                    root.manager.transition.direction = "right"
+        Camera:
+            id: camera
+            resolution: (1280, 720)
+            play: True
+        AnchorLayout:
+            anchor_x: "center"
+            anchor_y: "bottom"
+            Button:
+                text: "capture"
+                on_press: root.capture()
+                size_hint: 0.5, 0.1
+                
 
 <InputScreen>
+    name: "input"
     BoxLayout:
-        Label:
-            text: "Input data"
-            color: 0,0,0.3,1
+        orientation: "vertical"
+        Label: 
+            text: "Input Data"
+            color: 0.1, 0.1, 0.7,1
+        BoxLayout:
+            
+            orientation: "horizontal"
+            Button:
+                text: "Enter Manually"
+                
+            Button: 
+                text: "Scan Receipt"
+                on_press: 
+                    app.root.current = "camera"
+                    app.root.transition.direction = "left"
 <HistoryScreen>
     BoxLayout:
         Label:
             text: "History"
             color: 0,0.3,0,1
+<PostCameraScreen>
 
 <MainWidget>:
