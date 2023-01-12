@@ -157,6 +157,7 @@ WindowManager:
             HistoryScreen
 <CameraScreen>
     name: "camera"
+    on_enter: camera.play = not camera.play
     BoxLayout:
         orientation: "vertical"
         AnchorLayout:
@@ -166,12 +167,14 @@ WindowManager:
                 text: "back"
                 size_hint: 0.3, 0.05
                 on_press: 
+                    camera.play = not camera.play
                     app.root.current = "navigate"
                     root.manager.transition.direction = "right"
         Camera:
             id: camera
             resolution: (1280, 720)
-            play: True
+            play: False
+            
         AnchorLayout:
             anchor_x: "center"
             anchor_y: "bottom"
