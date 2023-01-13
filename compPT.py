@@ -17,12 +17,16 @@ from kivy.uix.tabbedpanel import TabbedPanel
 import requests
 from kivy.uix.camera import Camera
 import time
+import datetime
+from kivy.uix.dropdown import DropDown
+from kivy.uix.gridlayout import GridLayout
+from kivymd.uix.pickers import MDDatePicker
 # import firestore
 # from firestore import Collection
 
-Window.size = (400,700)
-Window.clearcolor = (1, 1, 1, 1)
-databaseURL = "https://silverwallets-c13d5.firebaseio.com"
+Window.size = (400,700) #sets screen size
+Window.clearcolor = (1, 1, 1, 1) #sets bg colour
+databaseURL = "https://silverwallets-c13d5.firebaseio.com" #url to get the firebase database
 #print(os.path.abspath("silverwallets-c13d5-firebase-adminsdk-aurvr-bbbeab4a0c.json"))
 cred_obj = credentials.Certificate(os.path.abspath("silverwallets-c13d5-firebase-adminsdk-aurvr-bbbeab4a0c.json")) #os path gets the path of the json file so it will work flawlessly on other devices
 default_app = firebase_admin.initialize_app(cred_obj, {
@@ -31,10 +35,10 @@ default_app = firebase_admin.initialize_app(cred_obj, {
 # app = firebase_admin.initialize_app();
 db = firestore.client();
 receiptOcrEndpoint = 'https://ocr.asprise.com/api/v1/receipt'
-
+receiptInfo = '' 
 userPW = '' 
 userEmail = ''
-def stringToDict(x):
+def stringToDict(x): #converts json string into dict in python
     dictionary = dict(subString.split("=") for subString in x.split(";"))
     return(dictionary)
 
@@ -51,11 +55,33 @@ class HomeScreen(Screen):
         super(HomeScreen, self).__init__(**kwargs)
         Clock.schedule_interval(self.welcomeString, 1) #need this to constaly update the screen as everything will be run at startup once
     def welcomeString(self,dt):
-        self.welcome_text = 'Welcome {},'.format(userEmail.split('@')[0])
+        self.welcome_text = 'Welcome {},'.format(userEmail.split('@')[0]) #splits user email for use in welcome screen
         print(self.welcome_text)
         print(userEmail,'1')
 
-    
+class ManualInputScreen(Screen):
+    arrData = []
+    current_date = ''
+    date_label = StringProperty('')
+    tag = StringProperty('')
+    def text_field_amount(self, widget):
+        self.tf_amount = widget.text.strip()
+    def submitData(self):
+        current_date = str(datetime.date.today())
+        self.arrData.append(self.current_date)
+        self.arrData.append(self.tf_amount)
+        self.arrData.append(self.tag)
+        print(self.arrData)
+
+    def on_save(self,instance,value,date_range):
+        self.date_label = str(value)
+        self.current_date = str(value)
+        
+    def showDatePicker(self):
+        date_dialog = MDDatePicker()
+        date_dialog.bind(on_save=self.on_save)
+        date_dialog.open()
+     
 class NavigationScreen(Screen):
     pass
 class InputScreen(Screen):
@@ -64,13 +90,14 @@ class HistoryScreen(Screen):
     pass
 class CameraScreen(Screen):
     def capture(self):
+        global receiptInfo
         '''
         Function to capture the images and give them the names
         according to their captured time and date.
         '''
         camera = self.ids['camera']
         timestr = time.strftime("%Y%m%d_%H%M%S")
-        temp = "IMG_{}.png".format(timestr)
+        temp = "IMG_{}.png".format(timestr) #adds timestamp to avoid
         camera.export_to_png(temp)
         print("Captured")
         imageFile = temp
@@ -79,9 +106,14 @@ class CameraScreen(Screen):
         'recognizer': 'auto',       # can be 'US', 'CA', 'JP', 'SG' or 'auto' \
         'ref_no': 'ocr_python_123', # optional caller provided ref code \
         }, \
-        files = {"file": open(imageFile, "rb")})
-        print(r.text)
+        files = {"file": open(imageFile, "rb")}) #^^ sends data to a receipt ocr API to process and return data
+        receiptInfo = r.text #receives data in JSON string
+        
+        print(receiptInfo)
+        
 class PostCameraScreen(Screen):
+    global receiptInfo 
+
     #screen for after reciept captured
     pass 
 def LogInCheck(x,y):
@@ -106,7 +138,7 @@ def LogInCheck(x,y):
 class LogInScreen(Screen):
     status_info = StringProperty("")
     def on_text_validate_email(self, widget):
-        self.text_input_email = widget.text.strip()
+        self.text_input_email = widget.text.strip() #values from text field
     def on_text_validate_pw(self, widget):
         self.text_input_pw = widget.text.strip()
     def signup_to_firebase(self):
@@ -114,7 +146,7 @@ class LogInScreen(Screen):
         global userPW
         #print(self.text_input_email)
         #ref = db.collection(u'accounts').document(u'dMo8Os9D5xwAWwgNtqIr');
-        try:
+        try: #validation checks
             if self.text_input_email == '' or self.text_input_pw == '':
                 print('empty fields')
                 self.status_info = "Error! Empty fields."
@@ -122,12 +154,12 @@ class LogInScreen(Screen):
                 if LogInCheck(self.text_input_email, self.text_input_pw) == True:
                     userEmail = self.text_input_email
                     self.status_info = "Correct, logging in"
-                    self.manager.current = "navigate"
+                    self.manager.current = "navigate" #sends to main screen
                     
                 else:
                     self.status_info = "Incorrect Details"
                     
-        except AttributeError:
+        except AttributeError: #to prevent crashing if nothing entered
             #print('a',self.text_input_email,self.text_input_pw)
             self.status_info = "Please fill in the fields"
 

@@ -9,6 +9,7 @@ WindowManager:
     HistoryScreen
     CameraScreen
     PostCameraScreen
+    ManualInputScreen
 <StartScreen>
     name: "start"
     BoxLayout:
@@ -180,7 +181,9 @@ WindowManager:
             anchor_y: "bottom"
             Button:
                 text: "capture"
-                on_press: root.capture()
+                on_press: 
+                    root.capture()
+                    app.root.current = "postCam"
                 size_hint: 0.5, 0.1
                 
 
@@ -196,17 +199,98 @@ WindowManager:
             orientation: "horizontal"
             Button:
                 text: "Enter Manually"
+                on_press:
+                    app.root.current = "manual"
+                    app.root.transition.direction = "left"
                 
             Button: 
                 text: "Scan Receipt"
                 on_press: 
                     app.root.current = "camera"
                     app.root.transition.direction = "left"
+
+<ManualInputScreen>
+    name: "manual"
+    BoxLayout:
+        orientation: "vertical"
+        Label:
+            text: "Manual Input"
+            color: 0.2,0.5,0.3,1
+        TextInput:
+            hint_text: "Enter your expenditure (SGD)"
+            multiline: False
+            on_text_validate: root.text_field_amount(self)
+            size_hint: 1, 0.4
+            input_filter: "float"
+        BoxLayout:
+            size_hint: 1, 0.22
+            Button:
+                text: "pick date"
+                on_press: root.showDatePicker()
+            Label:
+                text: root.date_label
+                color: 0.3, 0.3, 0.3, 1
+        GridLayout:
+            cols: 3
+            rows: 2
+            Button:
+                text: "Water Bill"
+                background_normal: ''
+                background_color: 0.3, 0.2, 0.7, .85
+                on_press: root.tag = "water"
+            Button:
+                text: "Electric Bill"
+                background_normal: ''
+                background_color: 0.3, 0.2, 0.7, .85
+                on_press: root.tag = "electric"
+            Button:
+                text: "Essentials"
+                background_normal: ''
+                background_color: 0.3, 0.2, 0.7, .85
+                on_press: root.tag = "essentials"
+            Button:
+                text: "Rent"
+                background_normal: ''
+                background_color: 0.3, 0.2, 0.7, .85
+                on_press: root.tag = "rent"
+            Button:
+                text: "Food"
+                background_normal: ''
+                background_color: 0.3, 0.2, 0.7, .85
+                on_press: root.tag = "food"
+            Button:
+                text: "Extras"
+                background_normal: ''
+                background_color: 0.3, 0.2, 0.7, .85
+                on_press: root.tag = "extras"
+
+        Label:
+            text: ""
+            size_hint: None, 0.23
+            color: 0.2,0.2,0,1
+        Button:
+            text: "Submit"
+            background_normal: ''
+            background_color: 0.3, 0.9, 0.1, .85
+            on_press: root.submitData()
+    
+
+    FloatLayout:
+        AnchorLayout:
+            anchor_x: "left"
+            anchor_y: "top"
+            Button:
+                text: "back"
+                size_hint:0.3, 0.05
+                on_press:
+                    app.root.current = "navigate"
+                    root.manager.transition.direction = "right"
 <HistoryScreen>
     BoxLayout:
         Label:
             text: "History"
             color: 0,0.3,0,1
 <PostCameraScreen>
+    name: "postCam"
 
 <MainWidget>:
