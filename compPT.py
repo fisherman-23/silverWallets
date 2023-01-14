@@ -25,6 +25,7 @@ from kivymd.uix.pickers import MDDatePicker
 # from firestore import Collection
 
 Window.size = (400,700) #sets screen size
+
 Window.clearcolor = (1, 1, 1, 1) #sets bg colour
 databaseURL = "https://silverwallets-c13d5.firebaseio.com" #url to get the firebase database
 #print(os.path.abspath("silverwallets-c13d5-firebase-adminsdk-aurvr-bbbeab4a0c.json"))
@@ -64,20 +65,35 @@ class ManualInputScreen(Screen):
     current_date = ''
     date_label = StringProperty('')
     tag = StringProperty('')
+    status_info =StringProperty('')
+    def onButtonClicked(self):
+        pass
     def text_field_amount(self, widget):
         self.tf_amount = widget.text.strip()
     def submitData(self):
-        current_date = str(datetime.date.today())
-        self.arrData.append(self.current_date)
-        self.arrData.append(self.tf_amount)
-        self.arrData.append(self.tag)
-        print(self.arrData)
+        try:
+            if self.tf_amount == '' or self.current_date == '' or self.tag == '':
+                #ask to enter value
+                self.status_info = "Error! Empty fields."
+            else:
+                self.status_info = "Successfully added"
+                current_date = str(datetime.date.today())
+                self.arrData.append(self.current_date)
+                self.arrData.append(self.tf_amount)
+                self.arrData.append(self.tag)
+                print(self.arrData)
+                # send to firebase
+                self.arrData = [] #clears data to avoid dupe
+        except AttributeError:
+            self.status_info = "Error! Empty Fields."
+
 
     def on_save(self,instance,value,date_range):
         self.date_label = str(value)
         self.current_date = str(value)
         
     def showDatePicker(self):
+        Window.size = (400,701)
         date_dialog = MDDatePicker()
         date_dialog.bind(on_save=self.on_save)
         date_dialog.open()

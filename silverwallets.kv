@@ -236,27 +236,32 @@ WindowManager:
             Button:
                 text: "Water Bill"
                 background_normal: ''
-                background_color: 0.3, 0.2, 0.7, .85
-                on_press: root.tag = "water"
+                background_color: 0.15, 0.47, 0.9, .85
+                on_press: 
+                    root.tag = "water"
+                    root.onButtonClicked()
+                    self.background_color: (0.15, 0.47, 0.9, .85)
+
             Button:
+                id: elec
                 text: "Electric Bill"
                 background_normal: ''
-                background_color: 0.3, 0.2, 0.7, .85
+                background_color: 0.96, 0.8, 0.15, .85
                 on_press: root.tag = "electric"
             Button:
                 text: "Essentials"
                 background_normal: ''
-                background_color: 0.3, 0.2, 0.7, .85
+                background_color: 0.67, 0.8, 0.69, .85
                 on_press: root.tag = "essentials"
             Button:
                 text: "Rent"
                 background_normal: ''
-                background_color: 0.3, 0.2, 0.7, .85
+                background_color: 0.93, 0.32, 0.32, .85
                 on_press: root.tag = "rent"
             Button:
                 text: "Food"
                 background_normal: ''
-                background_color: 0.3, 0.2, 0.7, .85
+                background_color: 0.9, 0.65, 0.35, .85
                 on_press: root.tag = "food"
             Button:
                 text: "Extras"
@@ -265,8 +270,8 @@ WindowManager:
                 on_press: root.tag = "extras"
 
         Label:
-            text: ""
-            size_hint: None, 0.23
+            text: root.status_info
+            size_hint: 1, 0.23
             color: 0.2,0.2,0,1
         Button:
             text: "Submit"
