@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from kivy.uix.scrollview import ScrollView
 from ast import literal_eval
+from kivy.uix.recycleview import RecycleView
 # import firestore
 # from firestore import Collection
 
@@ -43,7 +44,7 @@ db = firestore.client();
 receiptOcrEndpoint = 'https://ocr.asprise.com/api/v1/receipt'
 receiptInfo = '' 
 userPW = '' 
-userEmail = ''
+userEmail = 'guest' #temp value to avoid crashing if not found
 def stringToDict(x): #converts json string into dict in python
     dictionary = dict(subString.split("=") for subString in x.split(";"))
     return(dictionary)
@@ -137,7 +138,19 @@ class ManualInputScreen(Screen):
         date_dialog = MDDatePicker()
         date_dialog.bind(on_save=self.on_save)
         date_dialog.open()
-     
+class History(RecycleView):
+    def __init__(self, **kwargs):
+        super(History, self).__init__(**kwargs)
+        Clock.schedule_interval(self.refresh, 1)
+
+    def refresh(self,dt):
+        global userEmail
+        
+        doc_ref = db.collection(u'accounts').document(userEmail)
+        data = doc_ref.get().to_dict()
+        
+        userData = literal_eval(data.get(u'data').strip())
+        self.data = [{'text': 'date: {}, cost: ${}, tag: {}'.format(x[0],x[2],x[3])} for x in userData]
 class NavigationScreen(Screen):
     pass
 class InputScreen(Screen):

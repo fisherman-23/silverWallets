@@ -305,7 +305,21 @@ WindowManager:
                 on_press:
                     app.root.current = "navigate"
                     root.manager.transition.direction = "right"
+<History>
+    viewclass: 'Button'  # defines the viewtype for the data items.
+    orientation: "vertical"
+    spacing: 40
+    padding:10, 10
+    space_x: self.size[0]
+    RecycleBoxLayout:
+        color:(0, 0.7, 0.4, 0.8)
+        default_size: None, dp(56)
+        default_size_hint: 1, None 
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical' 
 <HistoryScreen>
+    History
     BoxLayout:
         Label:
             text: "History"
