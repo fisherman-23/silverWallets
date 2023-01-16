@@ -23,6 +23,9 @@ from kivy.uix.gridlayout import GridLayout
 from kivymd.uix.pickers import MDDatePicker
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
 import matplotlib.pyplot as plt
+import numpy as np
+from kivy.uix.scrollview import ScrollView
+from ast import literal_eval
 # import firestore
 # from firestore import Collection
 
@@ -44,7 +47,20 @@ userEmail = ''
 def stringToDict(x): #converts json string into dict in python
     dictionary = dict(subString.split("=") for subString in x.split(";"))
     return(dictionary)
+class Graph(BoxLayout):
+    
+    signal = [7, 89.6, 45.-56.34]
+    signal = np.array(signal)
+    plt.plot(signal)
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    
+    def __init__(self,**kwargs): 
+        super().__init__(**kwargs)
 
+        self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+
+    
 class WindowManager(ScreenManager):
     pass
 
@@ -52,19 +68,16 @@ class StartScreen(Screen):
     pass
 class HomeScreen(Screen):
     
-    x = [2,3,5,6,7]
-    y = [32,54,1,4,3]
-    plt.plot(x,y)
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    
+
     welcome_text = StringProperty("")
 
     def __init__(self,**kwargs): 
         super(HomeScreen, self).__init__(**kwargs)
         Clock.schedule_interval(self.welcomeString, 1) #need this to constaly update the screen as everything will be run at startup once
         #box = self.ids['box']
-        #box.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+        
+        
+
 
     def welcomeString(self,dt):
         self.welcome_text = 'Welcome {},'.format(userEmail.split('@')[0]) #splits user email for use in welcome screen
@@ -82,6 +95,7 @@ class ManualInputScreen(Screen):
     def text_field_amount(self, widget):
         self.tf_amount = widget.text.strip()
     def submitData(self):
+        global userEmail
         try:
             if self.tf_amount == '' or self.current_date == '' or self.tag == '':
                 #ask to enter value
@@ -101,6 +115,13 @@ class ManualInputScreen(Screen):
                 self.arrData.append(self.tf_amount)
                 self.arrData.append(self.tag)
                 print(self.arrData)
+                doc_ref = db.collection(u'accounts').document(userEmail)
+                data = doc_ref.get().to_dict()
+
+                userData = literal_eval(data.get('data' ).strip()) #what is stored in firebase  
+                print(userData)
+                userData.append(self.arrData)
+                doc_ref.update({u' data ': str(userData)})
                 # send to firebase
                 self.arrData = [] #clears data to avoid dupe
         except AttributeError:
