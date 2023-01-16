@@ -52,7 +52,7 @@ for i in range(1,n):
 		totalArr.append(arr)
 		arr = []
 arr = []	
-date = "2023-{}-{}".format(month,i)
+date = "2023-{}-{}".format(month,i+1)
 temp = date.split('-')
 day = datetime.datetime(int(temp[0]), int(temp[1]), int(temp[2])).weekday()
 if rent =="T":
