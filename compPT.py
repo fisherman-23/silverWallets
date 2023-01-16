@@ -21,6 +21,8 @@ import datetime
 from kivy.uix.dropdown import DropDown
 from kivy.uix.gridlayout import GridLayout
 from kivymd.uix.pickers import MDDatePicker
+from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
+import matplotlib.pyplot as plt
 # import firestore
 # from firestore import Collection
 
@@ -49,16 +51,25 @@ class WindowManager(ScreenManager):
 class StartScreen(Screen):
     pass
 class HomeScreen(Screen):
-
-    welcome_text = StringProperty("")
     
+    x = [2,3,5,6,7]
+    y = [32,54,1,4,3]
+    plt.plot(x,y)
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    
+    welcome_text = StringProperty("")
+
     def __init__(self,**kwargs): 
         super(HomeScreen, self).__init__(**kwargs)
         Clock.schedule_interval(self.welcomeString, 1) #need this to constaly update the screen as everything will be run at startup once
+        #box = self.ids['box']
+        #box.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+
     def welcomeString(self,dt):
         self.welcome_text = 'Welcome {},'.format(userEmail.split('@')[0]) #splits user email for use in welcome screen
-        print(self.welcome_text)
-        print(userEmail,'1')
+        #print(self.welcome_text)
+        #print(userEmail,'1')
 
 class ManualInputScreen(Screen):
     arrData = []
@@ -77,8 +88,16 @@ class ManualInputScreen(Screen):
                 self.status_info = "Error! Empty fields."
             else:
                 self.status_info = "Successfully added"
-                current_date = str(datetime.date.today())
+
+                
+                #print(self.current_date)
+                arr = self.current_date.split('-')
+                #print(arr)
+                temp = datetime.datetime(int(arr[0]), int(arr[1]), int(arr[2]))
+                day = temp.weekday()
+                #print(day)
                 self.arrData.append(self.current_date)
+                self.arrData.append(day)
                 self.arrData.append(self.tf_amount)
                 self.arrData.append(self.tag)
                 print(self.arrData)
