@@ -148,7 +148,6 @@ class History(RecycleView):
         
         doc_ref = db.collection(u'accounts').document(userEmail)
         data = doc_ref.get().to_dict()
-        
         userData = literal_eval(data.get(u'data').strip())
         self.data = [{'text': 'date: {}, cost: ${}, tag: {}'.format(x[0],x[2],x[3])} for x in userData]
 class NavigationScreen(Screen):
@@ -190,7 +189,7 @@ def LogInCheck(x,y):
     if doc_ref.get().exists: #checks if doc exists before proceeding to avoid crash
         #now check for password 
         data = doc_ref.get().to_dict()
-        pw = data.get(' pw ')
+        pw = data.get('pw')
         #print(pw)
         #print(type(pw))
 
@@ -258,7 +257,7 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
                 print('empty fields')
                 self.status_info = "Error! Empty fields."
             else:
-                str = " pw = {}; target = {}; data = []".format(self.text_input_pw,self.text_input_target)
+                str = "pw= {};target= {};data= []".format(self.text_input_pw,self.text_input_target)
                 ref = db.collection(u'accounts')
                 if ref.document(self.text_input_email).get().exists: #prevents override of exisitng data
                     print("already exists!")
