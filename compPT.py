@@ -27,6 +27,7 @@ import numpy as np
 from kivy.uix.scrollview import ScrollView
 from ast import literal_eval
 from kivy.uix.recycleview import RecycleView
+import json
 # import firestore
 # from firestore import Collection
 
@@ -138,6 +139,7 @@ class ManualInputScreen(Screen):
         date_dialog = MDDatePicker()
         date_dialog.bind(on_save=self.on_save)
         date_dialog.open()
+        
 class History(RecycleView):
     def __init__(self, **kwargs):
         super(History, self).__init__(**kwargs)
@@ -176,9 +178,46 @@ class CameraScreen(Screen):
         }, \
         files = {"file": open(imageFile, "rb")}) #^^ sends data to a receipt ocr API to process and return data
         receiptInfo = r.text #receives data in JSON string
-        
+        receiptInfo = receiptInfo.replace("\n", "").replace("\t", "") #clean two times to make it suitable for processing later on
+        receiptInfo = receiptInfo.replace("\n", "").replace("\t", "")
+        receiptInfo = json.loads(receiptInfo)
         print(receiptInfo)
-        
+        print(receiptInfo.get('success'))
+        if receiptInfo.get('message') != 'No receipts detected.' and receiptInfo.get('success') == True:
+            tempData = receiptInfo.get('receipts')
+            tempData = str(tempData)
+            tempData = tempData.strip('[')
+            tempData = tempData.strip(']')
+            tempData = tempData.replace("\n", "").replace("\t", "")
+            tempData = tempData.replace("\\n", "").replace("\t", "")
+            tempData = literal_eval(tempData)
+            print(tempData)
+            '''merchange name
+            merchant address
+            date, time
+            amount paid, taxes
+            payment details
+            category (not so sure yet)'''
+            merchName = tempData.get('merchant_name')
+            merchAddress = tempData.get('merchant_address')
+            date = tempData.get('date')
+            timeData = tempData.get('time')
+            items = tempData.get('items')
+            items = str(items)
+            items = items.strip('[')
+            items = items.strip(']')
+            items = literal_eval(items)
+            price = items.get('amount')
+            category = items.get('category')
+            tax = tempData.get('tax')
+            paymentMethod = tempData.get('payment_method')
+            creditCardType = tempData.get('credit_card_type')
+            print(merchName,merchAddress,date,timeData,price,category,tax,paymentMethod,creditCardType)
+
+            self.manager.current = "postCam"
+            #if recognised as receipt, then proceed
+        else:
+            pass
 class PostCameraScreen(Screen):
     global receiptInfo 
 

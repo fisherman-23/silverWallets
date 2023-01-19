@@ -142,7 +142,7 @@ WindowManager:
                 size_hint: .35, .05
                 text: root.welcome_text
                 text_size: cm(3), cm(3)
-                font_size: "50"
+                font_size: "47"
                 color: 0, 0, 0.3, 1
 
         AnchorLayout:
@@ -198,7 +198,7 @@ WindowManager:
                 text: "capture"
                 on_press: 
                     root.capture()
-                    app.root.current = "postCam"
+                    
                 size_hint: 0.5, 0.1
                 
 
@@ -305,6 +305,7 @@ WindowManager:
                 on_press:
                     app.root.current = "navigate"
                     root.manager.transition.direction = "right"
+
 <History>
     viewclass: 'Button'  # defines the viewtype for the data items.
     orientation: "vertical"
