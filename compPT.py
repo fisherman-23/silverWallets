@@ -46,6 +46,14 @@ receiptOcrEndpoint = 'https://ocr.asprise.com/api/v1/receipt'
 receiptInfo = '' 
 userPW = '' 
 userEmail = 'guest' #temp value to avoid crashing if not found
+merchName = ''
+merchAddress = ''
+timeData = ''
+date = ''
+category = ''
+amount = ''
+tax = ''
+payMeth = ''
 def stringToDict(x): #converts json string into dict in python
     dictionary = dict(subString.split("=") for subString in x.split(";"))
     return(dictionary)
@@ -159,8 +167,18 @@ class InputScreen(Screen):
 class HistoryScreen(Screen):
     pass
 class CameraScreen(Screen):
+    status_info = StringProperty('')
     def capture(self):
         global receiptInfo
+        global merchName
+        global merchAddress
+        global timeData
+        global date
+        global amount
+        global tax
+        global category
+        global payMeth
+        
         '''
         Function to capture the images and give them the names
         according to their captured time and date.
@@ -184,45 +202,76 @@ class CameraScreen(Screen):
         print(receiptInfo)
         print(receiptInfo.get('success'))
         if receiptInfo.get('message') != 'No receipts detected.' and receiptInfo.get('success') == True:
-            tempData = receiptInfo.get('receipts')
-            tempData = str(tempData)
-            tempData = tempData.strip('[')
-            tempData = tempData.strip(']')
-            tempData = tempData.replace("\n", "").replace("\t", "")
-            tempData = tempData.replace("\\n", "").replace("\t", "")
-            tempData = literal_eval(tempData)
-            print(tempData)
-            '''merchange name
-            merchant address
-            date, time
-            amount paid, taxes
-            payment details
-            category (not so sure yet)'''
-            merchName = tempData.get('merchant_name')
-            merchAddress = tempData.get('merchant_address')
-            date = tempData.get('date')
-            timeData = tempData.get('time')
-            items = tempData.get('items')
-            items = str(items)
-            items = items.strip('[')
-            items = items.strip(']')
-            items = literal_eval(items)
-            price = items.get('amount')
-            category = items.get('category')
-            tax = tempData.get('tax')
-            paymentMethod = tempData.get('payment_method')
-            creditCardType = tempData.get('credit_card_type')
-            print(merchName,merchAddress,date,timeData,price,category,tax,paymentMethod,creditCardType)
+            try:
+                 #if recognised as receipt, then proceed
+                tempData = receiptInfo.get('receipts')
+                tempData = str(tempData)
+                tempData = tempData.strip('[')
+                tempData = tempData.strip(']')
+                tempData = tempData.replace("\n", "").replace("\t", "")
+                tempData = tempData.replace("\\n", "").replace("\t", "")
+                tempData = literal_eval(tempData)
+                print(tempData)
+                '''merchange name
+                merchant address
+                date, time
+                amount paid, taxes
+                payment details
+                category (not so sure yet)'''
+                merchName = tempData.get('merchant_name')
+                merchAddress = tempData.get('merchant_address')
+                date = tempData.get('date')
+                timeData = tempData.get('time')
+                items = tempData.get('items')
+                items = str(items)
+                items = items.strip('[')
+                items = items.strip(']')
+                items = literal_eval(items)
+                amount = items.get('amount')
+                category = items.get('category')
+                tax = tempData.get('tax')
+                paymentMethod = tempData.get('payment_method')
+                creditCardType = tempData.get('credit_card_type')
+                print(merchName,merchAddress,date,timeData,amount,category,tax,paymentMethod,creditCardType)
+                self.manager.current = "postCam"
+                self.camera.play = not camera.play
+               
+            except AttributeError:
+                self.status_info = 'Receipt no info'
 
-            self.manager.current = "postCam"
-            #if recognised as receipt, then proceed
         else:
-            pass
+            self.status_info = 'No receipt detected'
 class PostCameraScreen(Screen):
-    global receiptInfo 
 
     #screen for after reciept captured
-    pass 
+    merchantInfo = StringProperty("")
+    merchantAddress = StringProperty("")
+    date = StringProperty("")
+    time = StringProperty("")
+    amount = StringProperty("")
+    tax = StringProperty("")
+    category = StringProperty("")
+    payMeth = StringProperty("")
+    def on_enter(self):
+        global merchName
+        global merchAddress
+        global timeData
+        global date
+        global amount
+        global tax
+        global category
+        global payMeth
+        self.merchantInfo = merchName
+        self.merchantAddress = merchAddress
+        self.date = date
+        self.time = timeData
+        self.amount = amount
+        self.tax = tax
+        self.category =category
+        self.payMeth = payMeth
+        pass
+    
+    
 def LogInCheck(x,y):
     doc_ref = db.collection(u'accounts').document(x)
     if doc_ref.get().exists: #checks if doc exists before proceeding to avoid crash

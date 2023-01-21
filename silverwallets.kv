@@ -190,7 +190,9 @@ WindowManager:
             id: camera
             resolution: (1280, 720)
             play: False
-            
+        Label:
+            text: root.status_info
+            color: 0,0,0,1
         AnchorLayout:
             anchor_x: "center"
             anchor_y: "bottom"
@@ -327,5 +329,34 @@ WindowManager:
             color: 0,0.3,0,1
 <PostCameraScreen>
     name: "postCam"
-
+    on_enter:
+        root.on_enter()
+    BoxLayout:
+        Label:
+            text: "Receipt Info"
+            color: 0.1,0.7,0.7,1
+        Label:
+            text: root.merchantInfo
+            color: 0,0,0,1
+        Label:
+            text: root.merchantAddress
+            color: 0,0,0,1
+        Label:
+            text: root.date
+            color: 0,0,0,1
+        Label:
+            text: root.time
+            color: 0,0,0,1
+        Label:
+            text: root.amount
+            color: 0,0,0,1
+        Label:
+            text: root.tax
+            color: 0,0,0,1
+        Label:
+            text: root.payMeth
+            color: 0,0,0,1
+        Label:
+            text: root.category
+            color: 0,0,0,1
 <MainWidget>:
