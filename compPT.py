@@ -85,9 +85,6 @@ class HomeScreen(Screen):
         super(HomeScreen, self).__init__(**kwargs)
         Clock.schedule_interval(self.welcomeString, 1) #need this to constaly update the screen as everything will be run at startup once
         #box = self.ids['box']
-        
-        
-
 
     def welcomeString(self,dt):
         self.welcome_text = 'Welcome {},'.format(userEmail.split('@')[0]) #splits user email for use in welcome screen
@@ -185,8 +182,9 @@ class CameraScreen(Screen):
         '''
         camera = self.ids['camera']
         timestr = time.strftime("%Y%m%d_%H%M%S")
-        temp = "IMG_{}.png".format(timestr) #adds timestamp to avoid
-        camera.export_to_png(temp)
+        temp = 'Screenshot 2023-01-22 at 10.52.32 AM.png'
+        #temp = "IMG_{}.png".format(timestr) #adds timestamp to avoid
+        #camera.export_to_png(temp)
         print("Captured")
         imageFile = temp
         r = requests.post(receiptOcrEndpoint, data = { \
@@ -221,25 +219,31 @@ class CameraScreen(Screen):
                 merchName = tempData.get('merchant_name')
                 merchAddress = tempData.get('merchant_address')
                 date = tempData.get('date')
-                timeData = tempData.get('time')
-                items = tempData.get('items')
-                items = str(items)
-                items = items.strip('[')
-                items = items.strip(']')
-                items = literal_eval(items)
-                amount = items.get('amount')
-                category = items.get('category')
-                tax = tempData.get('tax')
-                paymentMethod = tempData.get('payment_method')
-                creditCardType = tempData.get('credit_card_type')
-                print(merchName,merchAddress,date,timeData,amount,category,tax,paymentMethod,creditCardType)
-                self.manager.current = "postCam"
-                self.camera.play = not camera.play
+                amount = tempData.get('total')
+                if amount != None or date != None:
+                    timeData = tempData.get('time')
+                    tax = tempData.get('service_charge')
+                    items = tempData.get('items')
+                    category = items[0].get('category')
+                    #items = str(items)
+                    #items = items.strip('[')
+                    #items = items.strip(']')
+                    #items = literal_eval(items)
+                    #category = items.get('category')
+                    paymentMethod = tempData.get('payment_method')
+                    creditCardType = tempData.get('credit_card_type')
+                    print(merchName,merchAddress,date,timeData,amount,category,tax,paymentMethod,creditCardType)
+                    #self.camera.play = not camera.play
+                    self.manager.current = "postCam"
+                else: #receipt lacks the critical info to proceed (date, amount)
+                    self.status_info = 'Receipt lacks info'
                
             except AttributeError:
+                
                 self.status_info = 'Receipt no info'
 
         else:
+            
             self.status_info = 'No receipt detected'
 class PostCameraScreen(Screen):
 
@@ -252,6 +256,7 @@ class PostCameraScreen(Screen):
     tax = StringProperty("")
     category = StringProperty("")
     payMeth = StringProperty("")
+    tag = StringProperty('')
     def on_enter(self):
         global merchName
         global merchAddress
@@ -261,14 +266,16 @@ class PostCameraScreen(Screen):
         global tax
         global category
         global payMeth
-        self.merchantInfo = merchName
-        self.merchantAddress = merchAddress
-        self.date = date
-        self.time = timeData
-        self.amount = amount
-        self.tax = tax
-        self.category =category
-        self.payMeth = payMeth
+        self.merchantInfo = 'Merchant Info: '+'' if merchName is None else str(merchName)
+        self.merchantAddress = 'Address: '+'' if merchAddress is None else str(merchAddress)
+        self.date = 'Date: '+'' if date is None else str(date)
+        self.time = 'Time: '+'' if timeData is None else str(timeData)
+        self.amount = 'Amount: '+'' if amount is None else str(amount)
+        self.tax = 'Tax: '+'' if tax is None else str(tax)
+        self.category = 'Category: '+'' if category is None else str(category)
+        self.payMeth = 'Payment Meth: '+'' if payMeth is None else str(payMeth)
+    def submitData(self):
+        print(self.tag)
         pass
     
     
