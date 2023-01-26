@@ -28,24 +28,22 @@ from kivy.uix.scrollview import ScrollView
 from ast import literal_eval
 from kivy.uix.recycleview import RecycleView
 import json
-# import firestore
-# from firestore import Collection
 
 Window.size = (400,700) #sets screen size
 
 Window.clearcolor = (1, 1, 1, 1) #sets bg colour
 databaseURL = "https://silverwallets-c13d5.firebaseio.com" #url to get the firebase database
 #print(os.path.abspath("silverwallets-c13d5-firebase-adminsdk-aurvr-bbbeab4a0c.json"))
-cred_obj = credentials.Certificate(os.path.abspath("silverwallets-c13d5-firebase-adminsdk-aurvr-bbbeab4a0c.json")) #os path gets the path of the json file so it will work flawlessly on other devices
+cred_obj = credentials.Certificate(os.path.abspath("silverwallets-c13d5-firebase-adminsdk-aurvr-bbbeab4a0c.json")) #os path gets the path of the json file auto so it will work flawlessly on other devices
 default_app = firebase_admin.initialize_app(cred_obj, {
 	'databaseURL': databaseURL,
 });
 # app = firebase_admin.initialize_app();
 db = firestore.client();
-receiptOcrEndpoint = 'https://ocr.asprise.com/api/v1/receipt'
+receiptOcrEndpoint = 'https://ocr.asprise.com/api/v1/receipt' #this is where the receipts will be processed
 receiptInfo = '' 
 userPW = '' 
-userEmail = 'guest' #temp value to avoid crashing if not found
+userEmail = 'guest' #temp value to avoid crashing as all code will be run
 merchName = ''
 merchAddress = ''
 timeData = ''
@@ -125,7 +123,7 @@ class ManualInputScreen(Screen):
                 doc_ref = db.collection(u'accounts').document(userEmail)
                 data = doc_ref.get().to_dict()
 
-                userData = literal_eval(data.get('data' ).strip()) #what is stored in firebase  
+                userData = literal_eval(data.get('data').strip()) #what is stored in firebase  
                 print(userData)
                 userData.append(self.arrData)
                 doc_ref.update({u' data ': str(userData)})
@@ -135,11 +133,11 @@ class ManualInputScreen(Screen):
             self.status_info = "Error! Empty Fields."
 
 
-    def on_save(self,instance,value,date_range):
+    def on_save(self,instance,value,date_range): #save func assigns value of date
         self.date_label = str(value)
         self.current_date = str(value)
         
-    def showDatePicker(self):
+    def showDatePicker(self): #code to show date picker and calls save function when pressed
         Window.size = (400,701)
         date_dialog = MDDatePicker()
         date_dialog.bind(on_save=self.on_save)
@@ -148,7 +146,7 @@ class ManualInputScreen(Screen):
 class History(RecycleView):
     def __init__(self, **kwargs):
         super(History, self).__init__(**kwargs)
-        Clock.schedule_interval(self.refresh, 1)
+        Clock.schedule_interval(self.refresh, 1) #code that runs every 1sec as auto refresh
 
     def refresh(self,dt):
         global userEmail
@@ -182,9 +180,9 @@ class CameraScreen(Screen):
         '''
         camera = self.ids['camera']
         timestr = time.strftime("%Y%m%d_%H%M%S")
-        temp = 'Screenshot 2023-01-22 at 10.52.32 AM.png'
-        #temp = "IMG_{}.png".format(timestr) #adds timestamp to avoid
-        #camera.export_to_png(temp)
+        #temp = 'Screenshot 2023-01-22 at 10.52.32 AM.png' this ia test file
+        temp = "IMG_{}.png".format(timestr) #adds timestamp to avoid
+        camera.export_to_png(temp)
         print("Captured")
         imageFile = temp
         r = requests.post(receiptOcrEndpoint, data = { \
@@ -194,19 +192,20 @@ class CameraScreen(Screen):
         }, \
         files = {"file": open(imageFile, "rb")}) #^^ sends data to a receipt ocr API to process and return data
         receiptInfo = r.text #receives data in JSON string
-        receiptInfo = receiptInfo.replace("\n", "").replace("\t", "") #clean two times to make it suitable for processing later on
+        receiptInfo = receiptInfo.replace("\n", "").replace("\t", "") #clean to make it suitable for processing later on
         receiptInfo = receiptInfo.replace("\n", "").replace("\t", "")
         receiptInfo = json.loads(receiptInfo)
         print(receiptInfo)
         print(receiptInfo.get('success'))
         if receiptInfo.get('message') != 'No receipts detected.' and receiptInfo.get('success') == True:
+            #prevents crash if no receipt detected
             try:
                  #if recognised as receipt, then proceed
                 tempData = receiptInfo.get('receipts')
                 tempData = str(tempData)
                 tempData = tempData.strip('[')
                 tempData = tempData.strip(']')
-                tempData = tempData.replace("\n", "").replace("\t", "")
+                tempData = tempData.replace("\n", "").replace("\t", "") #make it suitable for processing
                 tempData = tempData.replace("\\n", "").replace("\t", "")
                 tempData = literal_eval(tempData)
                 print(tempData)
@@ -220,7 +219,7 @@ class CameraScreen(Screen):
                 merchAddress = tempData.get('merchant_address')
                 date = tempData.get('date')
                 amount = tempData.get('total')
-                if amount != None or date != None:
+                if amount != None and date != None: #if both have values, then proceed
                     timeData = tempData.get('time')
                     tax = tempData.get('service_charge')
                     items = tempData.get('items')
@@ -233,7 +232,8 @@ class CameraScreen(Screen):
                     paymentMethod = tempData.get('payment_method')
                     creditCardType = tempData.get('credit_card_type')
                     print(merchName,merchAddress,date,timeData,amount,category,tax,paymentMethod,creditCardType)
-                    #self.camera.play = not camera.play
+                    self.ids['camera'].play = not self.ids['camera'].play
+                    #turn off cam^^
                     self.manager.current = "postCam"
                 else: #receipt lacks the critical info to proceed (date, amount)
                     self.status_info = 'Receipt lacks info'
@@ -257,6 +257,7 @@ class PostCameraScreen(Screen):
     category = StringProperty("")
     payMeth = StringProperty("")
     tag = StringProperty('')
+    arrData = []
     def on_enter(self):
         global merchName
         global merchAddress
@@ -266,17 +267,49 @@ class PostCameraScreen(Screen):
         global tax
         global category
         global payMeth
-        self.merchantInfo = 'Merchant Info: '+'' if merchName is None else str(merchName)
-        self.merchantAddress = 'Address: '+'' if merchAddress is None else str(merchAddress)
-        self.date = 'Date: '+'' if date is None else str(date)
-        self.time = 'Time: '+'' if timeData is None else str(timeData)
-        self.amount = 'Amount: '+'' if amount is None else str(amount)
-        self.tax = 'Tax: '+'' if tax is None else str(tax)
-        self.category = 'Category: '+'' if category is None else str(category)
-        self.payMeth = 'Payment Meth: '+'' if payMeth is None else str(payMeth)
+        
+        #assigns the respective str to the label
+        self.merchantInfo = 'Merchant Info: '+('-' if merchName is None else str(merchName))
+        self.merchantAddress = 'Address: '+('-' if merchAddress is None else str(merchAddress))
+        self.date = 'Date: '+('-' if date is None else str(date))
+        self.time = 'Time: '+('-' if timeData is None else str(timeData))
+        self.amount = 'Amount: '+('-' if amount is None else str(amount))
+        self.tax = 'Tax: '+('-' if tax is None else str(tax))
+        self.category = 'Category: '+('-' if category is None else str(category))
+        self.payMeth = 'Payment Meth: '+('-' if payMeth is None else str(payMeth))
+
     def submitData(self):
-        print(self.tag)
-        pass
+        global userEmail
+        global date
+        global amount
+        try: #guard against error crash
+            if str(amount) == '' or str(date) == '' or self.tag == '':
+                #ask to enter value
+                self.tag = "Error! Empty fields."
+            else:
+                arr = str(date).split('-')
+                #print(arr)
+                temp = datetime.datetime(int(arr[0]), int(arr[1]), int(arr[2]))
+                day = temp.weekday()
+                #print(day)
+                self.arrData.append(str(date))
+                self.arrData.append(day)
+                self.arrData.append(str(amount))
+                self.arrData.append(self.tag)
+                print(self.arrData)
+                doc_ref = db.collection(u'accounts').document(userEmail)
+                data = doc_ref.get().to_dict()
+
+                userData = literal_eval(data.get('data').strip()) #what is stored in firebase  
+                print(userData)
+                userData.append(self.arrData)
+                doc_ref.update({u' data ': str(userData)})
+                # send to firebase
+                self.arrData = [] #clears data to avoid dupe
+                self.tag = "Successfully added"
+                self.manager.current = "navigate"
+        except AttributeError:
+            self.tag = "AttributeError"
     
     
 def LogInCheck(x,y):
@@ -346,19 +379,18 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
         global userEmail
         global userPW
         #print(self.text_input_email)
-        #ref = db.collection(u'accounts').document(u'dMo8Os9D5xwAWwgNtqIr');
-        try:
+        try: #data verfication
             if self.text_input_email == '' or self.text_input_pw == '' or self.text_input_target == '':
                 print('empty fields')
                 self.status_info = "Error! Empty fields."
             else:
-                str = "pw= {};target= {};data= []".format(self.text_input_pw,self.text_input_target)
+                str = "pw= {};target= {};data= []".format(self.text_input_pw,self.text_input_target) #prepare the data into a string for the firebase set() func
                 ref = db.collection(u'accounts')
                 if ref.document(self.text_input_email).get().exists: #prevents override of exisitng data
                     print("already exists!")
                     self.status_info = "Error! Already exists, try logging in"
                 else:
-                    ref.document(self.text_input_email).set(stringToDict(str));
+                    ref.document(self.text_input_email).set(stringToDict(str)); #creates users data in database
                     userEmail = self.text_input_email
                     userPW =  self.text_input_pw
                     self.status_info = "Success!"

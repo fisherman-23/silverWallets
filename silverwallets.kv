@@ -409,7 +409,12 @@ WindowManager:
                 text: "Extras"
                 background_normal: ''
                 background_color: 0.3, 0.2, 0.7, .85
-                on_press: root.tag = "extras"
+                on_press:
+                    root.tag = "extras"
+
+        Label:
+            text: root.tag
+            color: 0.2,0.2,0,1
 
         Button:
             text: "submit"
