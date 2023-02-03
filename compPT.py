@@ -1,3 +1,4 @@
+#MAIN FILE
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.core.window import Window
@@ -28,14 +29,16 @@ from kivy.uix.scrollview import ScrollView
 from ast import literal_eval
 from kivy.uix.recycleview import RecycleView
 import json
-
+import re
+import calendar
+regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b' #a sequence of characters that specifies a search pattern in text, used for the following email valdiaiton function
 Window.size = (400,700) #sets screen size
 
 Window.clearcolor = (1, 1, 1, 1) #sets bg colour
 databaseURL = "https://silverwallets-c13d5.firebaseio.com" #url to get the firebase database
 #print(os.path.abspath("silverwallets-c13d5-firebase-adminsdk-aurvr-bbbeab4a0c.json"))
 cred_obj = credentials.Certificate(os.path.abspath("silverwallets-c13d5-firebase-adminsdk-aurvr-bbbeab4a0c.json")) #os path gets the path of the json file auto so it will work flawlessly on other devices
-default_app = firebase_admin.initialize_app(cred_obj, {
+default_app = firebase_admin.initialize_app(cred_obj, { #initialize the connection to firebase given the databaseURL given^^
 	'databaseURL': databaseURL,
 });
 # app = firebase_admin.initialize_app();
@@ -55,6 +58,13 @@ payMeth = ''
 def stringToDict(x): #converts json string into dict in python
     dictionary = dict(subString.split("=") for subString in x.split(";"))
     return(dictionary)
+def check(email):
+    #checks if email is valid using the re library 
+    #fullmatch() method
+    if(re.fullmatch(regex, email)):
+        return True
+    else:
+        return False
 class Graph(BoxLayout):
     
     signal = [7, 89.6, 45.-56.34]
@@ -75,8 +85,6 @@ class WindowManager(ScreenManager):
 class StartScreen(Screen):
     pass
 class HomeScreen(Screen):
-    
-
     welcome_text = StringProperty("")
 
     def __init__(self,**kwargs): 
@@ -88,7 +96,8 @@ class HomeScreen(Screen):
         self.welcome_text = 'Welcome {},'.format(userEmail.split('@')[0]) #splits user email for use in welcome screen
         #print(self.welcome_text)
         #print(userEmail,'1')
-
+class SettingScreen(Screen):
+    pass
 class ManualInputScreen(Screen):
     arrData = []
     current_date = ''
@@ -98,7 +107,7 @@ class ManualInputScreen(Screen):
     def onButtonClicked(self):
         pass
     def text_field_amount(self, widget):
-        self.tf_amount = widget.text.strip()
+        self.tf_amount = widget.text.strip() #strip to prevent sending blank spaces
     def submitData(self):
         global userEmail
         try:
@@ -106,29 +115,27 @@ class ManualInputScreen(Screen):
                 #ask to enter value
                 self.status_info = "Error! Empty fields."
             else:
-                self.status_info = "Successfully added"
 
-                
                 #print(self.current_date)
                 arr = self.current_date.split('-')
                 #print(arr)
                 temp = datetime.datetime(int(arr[0]), int(arr[1]), int(arr[2]))
                 day = temp.weekday()
-                #print(day)
+                #appends all data into a single array
                 self.arrData.append(self.current_date)
                 self.arrData.append(day)
                 self.arrData.append(self.tf_amount)
                 self.arrData.append(self.tag)
                 print(self.arrData)
-                doc_ref = db.collection(u'accounts').document(userEmail)
-                data = doc_ref.get().to_dict()
+                doc_ref = db.collection(u'accounts').document(userEmail) #gets the path of data to be sent
+                data = doc_ref.get().to_dict() #converts the array into a dict format
 
                 userData = literal_eval(data.get('data').strip()) #what is stored in firebase  
                 print(userData)
-                userData.append(self.arrData)
-                doc_ref.update({u' data ': str(userData)})
-                # send to firebase
+                userData.append(self.arrData) #combines the exisitng data with data to be sent
+                doc_ref.update({u' data ': str(userData)}) # send to firebase
                 self.arrData = [] #clears data to avoid dupe
+                self.status_info = "Successfully added"
         except AttributeError:
             self.status_info = "Error! Empty Fields."
 
@@ -153,8 +160,9 @@ class History(RecycleView):
         
         doc_ref = db.collection(u'accounts').document(userEmail)
         data = doc_ref.get().to_dict()
-        userData = literal_eval(data.get(u'data').strip())
-        self.data = [{'text': 'date: {}, cost: ${}, tag: {}'.format(x[0],x[2],x[3])} for x in userData]
+        userData = literal_eval(data.get(u'data').strip()) #gets data from database and puts it in an array
+        self.data = [{'text': '{}, {}\n${:.2f}, {}'.format(x[0],calendar.day_name[int(x[1])],float(x[2]),x[3])} for x in userData] #puts all the data into respective string format
+        #this data will be used by the recycle view in the kv file
 class NavigationScreen(Screen):
     pass
 class InputScreen(Screen):
@@ -180,7 +188,7 @@ class CameraScreen(Screen):
         '''
         camera = self.ids['camera']
         timestr = time.strftime("%Y%m%d_%H%M%S")
-        #temp = 'Screenshot 2023-01-22 at 10.52.32 AM.png' this ia test file
+        #temp = 'swtest2.jpg'
         temp = "IMG_{}.png".format(timestr) #adds timestamp to avoid
         camera.export_to_png(temp)
         print("Captured")
@@ -384,11 +392,14 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
                 print('empty fields')
                 self.status_info = "Error! Empty fields."
             else:
+
                 str = "pw= {};target= {};data= []".format(self.text_input_pw,self.text_input_target) #prepare the data into a string for the firebase set() func
                 ref = db.collection(u'accounts')
                 if ref.document(self.text_input_email).get().exists: #prevents override of exisitng data
                     print("already exists!")
                     self.status_info = "Error! Already exists, try logging in"
+                elif check(self.text_input_email) == False:
+                    self.status_info = "enter a valid email"
                 else:
                     ref.document(self.text_input_email).set(stringToDict(str)); #creates users data in database
                     userEmail = self.text_input_email
