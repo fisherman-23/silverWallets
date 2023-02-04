@@ -61,11 +61,13 @@ WindowManager:
                 color: 0,0,1,1
                 font_name: "ProductSansBold"
             TextInput:
+                id: email
                 hint_text: "Enter email"
                 font_name: "ProductSans"
                 multiline: False
                 on_text_validate: root.on_text_validate_email(self)
             TextInput:
+                id: pw
                 hint_text: "Enter password"
                 font_name: "ProductSans"
                 multiline: False
@@ -80,7 +82,7 @@ WindowManager:
                 font_name: "ProductSansBold"
                 color: 0,0,0,1     
                 background_normal: ''
-                background_color: 0.3, 0.9, 0.1, .85
+                background_color: 0.21, 0.65, 0.3, .85
                 on_press: 
                     root.signup_to_firebase()
         AnchorLayout:
@@ -104,12 +106,13 @@ WindowManager:
                 color: 1,0,1,1
                 font_name: "ProductSansBold"
             TextInput:
-                id: signUpText
+                id: email
                 hint_text: "Enter email"
                 font_name: "ProductSans"
                 multiline: False
                 on_text_validate: root.on_text_validate_email(self)
             TextInput:
+                id: pw
                 hint_text: "Enter password"
                 font_name: "ProductSans"
                 multiline: False
@@ -120,6 +123,7 @@ WindowManager:
                 size_hint: 1,0.23
                 font_name: "ProductSansBold"
             TextInput:
+                id: limit
                 hint_text: "Enter amount in SGD"
                 font_name: "ProductSans"
                 multiline: False
@@ -133,9 +137,10 @@ WindowManager:
             Button:
 
                 text: "CONFIRM"
+                font_name: "ProductSansBold"
                 color: 0,0,0,1     
                 background_normal: ''
-                background_color: 0.3, 0.9, 0.1, .85
+                background_color: 0.21, 0.65, 0.3, .85
                 on_press: 
                     root.signup_to_firebase()
         AnchorLayout:
@@ -511,6 +516,7 @@ WindowManager:
                 background_normal: ''
                 background_color: 0.81, 0.81, 0.81, .85
                 text: "Log Out"
+                on_press: root.log_out()
                 font_name: "ProductSansBold"
                 color: 1,0.1,0.1,1
                 size_hint: 1, .2

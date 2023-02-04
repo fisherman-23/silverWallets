@@ -97,7 +97,14 @@ class HomeScreen(Screen):
         #print(self.welcome_text)
         #print(userEmail,'1')
 class SettingScreen(Screen):
-    pass
+    def log_out(self):
+        global userEmail
+        global userPW
+        userEmail = 'guest'
+        userPW = ''
+        self.manager.current = "start"
+        #self.manager.transition.direction = 'right'
+
 class ManualInputScreen(Screen):
     arrData = []
     current_date = ''
@@ -244,11 +251,11 @@ class CameraScreen(Screen):
                     #turn off cam^^
                     self.manager.current = "postCam"
                 else: #receipt lacks the critical info to proceed (date, amount)
-                    self.status_info = 'Receipt lacks info'
+                    self.status_info = 'Receipt lacks info, make sure receipt is clearly captured'
                
             except AttributeError:
                 
-                self.status_info = 'Receipt no info'
+                self.status_info = 'Receipt no info, make sure receipt is clealry captured'
 
         else:
             
@@ -286,7 +293,7 @@ class PostCameraScreen(Screen):
         self.category = 'Category: '+('-' if category is None else str(category))
         self.payMeth = 'Payment Meth: '+('-' if payMeth is None else str(payMeth))
 
-    def submitData(self):
+    def submitData(self): #submit in format -> [date, day, amt, tag]
         global userEmail
         global date
         global amount
@@ -314,6 +321,7 @@ class PostCameraScreen(Screen):
                 doc_ref.update({u' data ': str(userData)})
                 # send to firebase
                 self.arrData = [] #clears data to avoid dupe
+                
                 self.tag = "Successfully added"
                 self.manager.current = "navigate"
         except AttributeError:
@@ -341,6 +349,7 @@ def LogInCheck(x,y):
     
 class LogInScreen(Screen):
     status_info = StringProperty("")
+
     def on_text_validate_email(self, widget):
         self.text_input_email = widget.text.strip() #values from text field
     def on_text_validate_pw(self, widget):
@@ -356,10 +365,14 @@ class LogInScreen(Screen):
                 self.status_info = "Error! Empty fields."
             else:
                 if LogInCheck(self.text_input_email, self.text_input_pw) == True:
+                    self.status_info = 'Success! Logging-in'
                     userEmail = self.text_input_email
-                    self.status_info = "Correct, logging in"
+                    self.text_input_email = ''
+                    self.text_input_pw = ''
+                    self.ids['email'].text = ''
+                    self.ids['pw'].text = '' #clears data        
+                    self.status_info = ""
                     self.manager.current = "navigate" #sends to main screen
-                    
                 else:
                     self.status_info = "Incorrect Details"
                     
@@ -402,9 +415,17 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
                     self.status_info = "enter a valid email"
                 else:
                     ref.document(self.text_input_email).set(stringToDict(str)); #creates users data in database
+                    self.status_info = "Success!"
                     userEmail = self.text_input_email
                     userPW =  self.text_input_pw
-                    self.status_info = "Success!"
+                    self.text_input_email = ''
+                    self.text_input_pw = ''
+                    self.text_input_target = ''
+                    self.ids['email'].text = ''
+                    self.ids['pw'].text = '' #clears data 
+                    self.ids['limit'].text = ''
+                    self.status_info = ''
+                    self.manager.current = 'login'
         except AttributeError:
             self.status_info = "Please fill in the fields"
         
