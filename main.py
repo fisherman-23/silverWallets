@@ -1,5 +1,6 @@
 #MAIN FILE
 from kivy.app import App
+from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
@@ -28,9 +29,15 @@ import numpy as np
 from kivy.uix.scrollview import ScrollView
 from ast import literal_eval
 from kivy.uix.recycleview import RecycleView
+from kivy.properties import BooleanProperty
+from kivy.uix.recycleboxlayout import RecycleBoxLayout
+from kivy.uix.behaviors import FocusBehavior
+from kivy.uix.recycleview.layout import LayoutSelectionBehavior
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
 import json
 import re
 import calendar
+from decimal import Decimal
 regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b' #a sequence of characters that specifies a search pattern in text, used for the following email valdiaiton function
 Window.size = (400,700) #sets screen size
 
@@ -51,7 +58,7 @@ merchName = ''
 merchAddress = ''
 timeData = ''
 date = ''
-category = ''
+selectedData = []
 amount = ''
 tax = ''
 payMeth = ''
@@ -115,6 +122,9 @@ class ManualInputScreen(Screen):
         pass
     def text_field_amount(self, widget):
         self.tf_amount = widget.text.strip() #strip to prevent sending blank spaces
+        s =  self.tf_amount#removes trailing 0 to keep data consistent
+        self.tf_amount = s.rstrip('0').rstrip('.') if '.' in s else s
+
     def submitData(self):
         global userEmail
         try:
@@ -142,6 +152,11 @@ class ManualInputScreen(Screen):
                 userData.append(self.arrData) #combines the exisitng data with data to be sent
                 doc_ref.update({u' data ': str(userData)}) # send to firebase
                 self.arrData = [] #clears data to avoid dupe
+                self.current_date = ''
+                self.date_label = ''
+                self.tf_amount = ''
+                self.tag = ''
+                self.ids['amt'].text  = ''
                 self.status_info = "Successfully added"
         except AttributeError:
             self.status_info = "Error! Empty Fields."
@@ -156,11 +171,44 @@ class ManualInputScreen(Screen):
         date_dialog = MDDatePicker()
         date_dialog.bind(on_save=self.on_save)
         date_dialog.open()
-        
+class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
+                                 RecycleBoxLayout):
+    ''' Adds selection and focus behaviour to the view. '''
+class SelectableLabel(RecycleDataViewBehavior, Label):
+    ''' Add selection support to the Label '''
+    index = None
+    selected = BooleanProperty(False)
+    selectable = BooleanProperty(True)
+    
+    def refresh_view_attrs(self, rv, index, data):
+        ''' Catch and handle the view changes '''
+        self.index = index
+        return super(SelectableLabel, self).refresh_view_attrs(
+            rv, index, data)
+
+    def on_touch_down(self, touch):
+        ''' Add selection on touch down '''
+        if super(SelectableLabel, self).on_touch_down(touch):
+            return True
+        if self.collide_point(*touch.pos) and self.selectable:
+            return self.parent.select_with_touch(self.index, touch)
+
+    def apply_selection(self, rv, index, is_selected):
+        global selectedData
+        ''' Respond to the selection of items in the view. '''
+        self.selected = is_selected
+        if is_selected:
+            print("selection changed to {0}".format(rv.data[index]))
+            print(rv.data[index])
+            selectedData.append(rv.data[index]) #adds to list of selected data
+        else:
+            print("selection removed for {0}".format(rv.data[index])) 
+            if rv.data[index] in selectedData:#this is to prevent crashing as data will be auto-registered as remove at initial start
+                selectedData.remove(rv.data[index])
 class History(RecycleView):
     def __init__(self, **kwargs):
         super(History, self).__init__(**kwargs)
-        Clock.schedule_interval(self.refresh, 1) #code that runs every 1sec as auto refresh
+        Clock.schedule_interval(self.refresh, 3) #code that runs every 1sec as auto refresh
 
     def refresh(self,dt):
         global userEmail
@@ -175,7 +223,33 @@ class NavigationScreen(Screen):
 class InputScreen(Screen):
     pass
 class HistoryScreen(Screen):
-    pass
+    def remove(self):
+        doc_ref = db.collection(u'accounts').document(userEmail)
+        data = doc_ref.get().to_dict()
+        print(data)
+        userData = literal_eval(data.get('data').strip()) #what is stored in firebase  
+        global selectedData
+        print(selectedData)
+        for i in selectedData:
+            temp = str(list(dict.values(i)))
+            temp = temp.strip("['")
+            temp = temp.strip("']")
+            temp2 = temp.split('\\n')
+            dateNDay = temp2[0].split(',')
+            date = dateNDay[0]
+            day = dateNDay[1].strip()
+            #convert into int
+            amtNTag = temp2[1].split(',')
+            amt = str(amtNTag[0]).replace('$','')
+            amt = amt.rstrip('0').rstrip('.') if '.' in amt else amt
+            tag = str(amtNTag[1]).strip()
+            day = time.strptime(day, "%A").tm_wday
+            arr = [date,day,amt,tag]
+            print(userData,arr)
+            if arr in userData: #check if value to be deleted exists
+                userData.remove(arr) #remove the value
+                doc_ref.update({u' data ': str(userData)}) #update to firebase
+                print('remove')
 class CameraScreen(Screen):
     status_info = StringProperty('')
     def capture(self):
@@ -186,7 +260,6 @@ class CameraScreen(Screen):
         global date
         global amount
         global tax
-        global category
         global payMeth
         
         '''
@@ -195,7 +268,7 @@ class CameraScreen(Screen):
         '''
         camera = self.ids['camera']
         timestr = time.strftime("%Y%m%d_%H%M%S")
-        #temp = 'swtest2.jpg'
+        #temp = 'receiptTest1.jpg'
         temp = "IMG_{}.png".format(timestr) #adds timestamp to avoid
         camera.export_to_png(temp)
         print("Captured")
@@ -238,15 +311,16 @@ class CameraScreen(Screen):
                     timeData = tempData.get('time')
                     tax = tempData.get('service_charge')
                     items = tempData.get('items')
-                    category = items[0].get('category')
                     #items = str(items)
                     #items = items.strip('[')
                     #items = items.strip(']')
                     #items = literal_eval(items)
-                    #category = items.get('category')
+
                     paymentMethod = tempData.get('payment_method')
                     creditCardType = tempData.get('credit_card_type')
-                    print(merchName,merchAddress,date,timeData,amount,category,tax,paymentMethod,creditCardType)
+                    print(merchName,merchAddress,date,timeData,amount,tax,paymentMethod,creditCardType)
+                    if paymentMethod != None and creditCardType != None:
+                        payMeth = str(paymentMethod) + str(creditCardType)
                     self.ids['camera'].play = not self.ids['camera'].play
                     #turn off cam^^
                     self.manager.current = "postCam"
@@ -269,10 +343,10 @@ class PostCameraScreen(Screen):
     time = StringProperty("")
     amount = StringProperty("")
     tax = StringProperty("")
-    category = StringProperty("")
     payMeth = StringProperty("")
     tag = StringProperty('')
     arrData = []
+    arrReceiptData = []
     def on_enter(self):
         global merchName
         global merchAddress
@@ -280,7 +354,6 @@ class PostCameraScreen(Screen):
         global date
         global amount
         global tax
-        global category
         global payMeth
         
         #assigns the respective str to the label
@@ -290,38 +363,69 @@ class PostCameraScreen(Screen):
         self.time = 'Time: '+('-' if timeData is None else str(timeData))
         self.amount = 'Amount: '+('-' if amount is None else str(amount))
         self.tax = 'Tax: '+('-' if tax is None else str(tax))
-        self.category = 'Category: '+('-' if category is None else str(category))
         self.payMeth = 'Payment Meth: '+('-' if payMeth is None else str(payMeth))
 
     def submitData(self): #submit in format -> [date, day, amt, tag]
         global userEmail
+        global merchName
+        global merchAddress
+        global timeData
         global date
         global amount
+        global tax
+        global payMeth
+        print(merchName, merchAddress, timeData, tax, payMeth)
         try: #guard against error crash
             if str(amount) == '' or str(date) == '' or self.tag == '':
                 #ask to enter value
                 self.tag = "Error! Empty fields."
             else:
                 arr = str(date).split('-')
-                #print(arr)
+
                 temp = datetime.datetime(int(arr[0]), int(arr[1]), int(arr[2]))
                 day = temp.weekday()
-                #print(day)
+                s = str(amount)
+                amount = s.rstrip('0').rstrip('.') if '.' in s else s #removes trailing 0 to keep data consistent
+                #set up array for update
                 self.arrData.append(str(date))
                 self.arrData.append(day)
                 self.arrData.append(str(amount))
                 self.arrData.append(self.tag)
                 print(self.arrData)
+
+                self.arrReceiptData.append(str(date))
+                print(1)
+                self.arrReceiptData.append(day)
+                print(1)
+                self.arrReceiptData.append(str(amount))
+                print(1)
+                self.arrReceiptData.append(self.tag)
+                print(1)
+                self.arrReceiptData.append(str(merchName))
+                print(1)
+                self.arrReceiptData.append(str(merchAddress))
+                print(1)
+                self.arrReceiptData.append(str(timeData))
+                print(1)
+                self.arrReceiptData.append(str(tax))
+                print(1)
+                self.arrReceiptData.append(str(payMeth))
+                print(1)
+
                 doc_ref = db.collection(u'accounts').document(userEmail)
                 data = doc_ref.get().to_dict()
-
+                print(data)
                 userData = literal_eval(data.get('data').strip()) #what is stored in firebase  
-                print(userData)
-                userData.append(self.arrData)
-                doc_ref.update({u' data ': str(userData)})
-                # send to firebase
+                userReceiptData = literal_eval(data.get('receiptData').strip())
+                print(userData,userReceiptData)
+                userData.append(self.arrData) #append new data to existing
+                userReceiptData.append(self.arrReceiptData) #append new data to existing
+                #update database
+                doc_ref.update({u' data ': str(userData)}) #updates data values, this stores all data, manual and receipt
+                doc_ref.update({u' receiptData ': str(userReceiptData)}) #updates receiptData values, this only stores info from receipt
+
                 self.arrData = [] #clears data to avoid dupe
-                
+                self.arrReceiptData = []
                 self.tag = "Successfully added"
                 self.manager.current = "navigate"
         except AttributeError:
@@ -406,7 +510,7 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
                 self.status_info = "Error! Empty fields."
             else:
 
-                str = "pw= {};target= {};data= []".format(self.text_input_pw,self.text_input_target) #prepare the data into a string for the firebase set() func
+                str = "pw= {};target= {};data= [];receiptData= []".format(self.text_input_pw,self.text_input_target) #prepare the data into a string for the firebase set() func
                 ref = db.collection(u'accounts')
                 if ref.document(self.text_input_email).get().exists: #prevents override of exisitng data
                     print("already exists!")
