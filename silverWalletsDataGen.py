@@ -84,9 +84,9 @@ arr = []
 r = random.randint(1,50)
 if r < 10:
 	cost = round(random.uniform(100.0,500.0),1)
-	arr.append(str(cost))
-	arr.append(day)
 	arr.append(date)
+	arr.append(day)
+	arr.append(str(cost))
 	arr.append("savings")
 	totalArr.append(arr)
 	arr=[]
