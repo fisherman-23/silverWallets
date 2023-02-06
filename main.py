@@ -104,6 +104,7 @@ class HomeScreen(Screen):
         #print(self.welcome_text)
         #print(userEmail,'1')
 class SettingScreen(Screen):
+    status_info = StringProperty('')
     def log_out(self):
         global userEmail
         global userPW
@@ -111,6 +112,22 @@ class SettingScreen(Screen):
         userPW = ''
         self.manager.current = "start"
         #self.manager.transition.direction = 'right'
+    def income(self, widget): #function that gets value of email text field when confirm button pressed
+        self.incomeAmt = widget.text.strip()
+        print(self.incomeAmt)
+    def update(self):
+        global userEmail
+        try: #data verfication
+            if self.incomeAmt == '':
+                print('empty fields')
+                self.status_info = "Error! Empty field."
+            else:
+                doc_ref = db.collection(u'accounts').document(userEmail)
+                doc_ref.update({u' target ': str(self.incomeAmt)})
+                self.status_info = "Successfully updated"
+        except AttributeError:
+            self.status_info = "Please fill in the field"
+
 
 class ManualInputScreen(Screen):
     arrData = []

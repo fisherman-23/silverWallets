@@ -118,7 +118,7 @@ WindowManager:
                 multiline: False
                 on_text_validate: root.on_text_validate_pw(self)
             Label:
-                text: "Monthly Expenditure Limit:"
+                text: "Average monthly income"
                 color: 0,0,0,1
                 size_hint: 1,0.23
                 font_name: "ProductSansBold"
@@ -550,7 +550,21 @@ WindowManager:
                 font_name: "ProductSansBold"
                 color: 1,0.1,0.1,1
                 size_hint: 1, .2
-                
+            BoxLayout:
+                size_hint:1,.2
+                TextInput:
+                    id: income
+                    multiline: False
+                    hint_text: 'Enter updated income'
+                    font_name: "ProductSans"
+                    input_filter: "float"
+                    on_text_validate: root.income(self)
+                Button:
+                    background_normal: ''
+                    background_color: 0.1, 1, 0.1, .85
+                    text: "Update"
+                    font_name: "ProductSansBold"
+                    on_press: root.update()
             Button:
                 background_normal: ''
                 background_color: 0.81, 0.81, 0.81, .85
@@ -565,5 +579,10 @@ WindowManager:
                 font_name: "ProductSansBold"
                 color: 0.4,0.4,1,1
                 size_hint: 1, .2
+            Label:
+                text: root.status_info
+                size_hint: 1, 0.23
+                color: 0.2,0.2,0,1
+                font_name: "ProductSansBold"
 
 <MainWidget>:
