@@ -121,13 +121,14 @@ class SettingScreen(Screen):
             if self.incomeAmt == '':
                 print('empty fields')
                 self.status_info = "Error! Empty field."
+            elif not float(self.incomeAmt) > 0:
+                self.status_info = "Income must be more than 0"
             else:
                 doc_ref = db.collection(u'accounts').document(userEmail)
                 doc_ref.update({u' target ': str(self.incomeAmt)})
                 self.status_info = "Successfully updated"
         except AttributeError:
             self.status_info = "Please fill in the field"
-
 
 class ManualInputScreen(Screen):
     arrData = []
@@ -148,6 +149,8 @@ class ManualInputScreen(Screen):
             if self.tf_amount == '' or self.current_date == '' or self.tag == '':
                 #ask to enter value
                 self.status_info = "Error! Empty fields."
+            elif not float(self.tf_amount) >0:
+                self.status_info = "Amount must be more than 0"
             else:
 
                 #print(self.current_date)
@@ -534,6 +537,8 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
                     self.status_info = "Error! Already exists, try logging in"
                 elif check(self.text_input_email) == False:
                     self.status_info = "enter a valid email"
+                elif not float(self.text_input_target) >0:
+                    self.status_info = 'Income must be more than 0'
                 else:
                     ref.document(self.text_input_email).set(stringToDict(str)); #creates users data in database
                     self.status_info = "Success!"
