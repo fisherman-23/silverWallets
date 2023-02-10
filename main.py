@@ -38,6 +38,17 @@ import json
 import re
 import calendar
 from decimal import Decimal
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import random
+from sklearn import metrics
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVR
+from sklearn.ensemble import RandomForestRegressor as RFR
+from sklmodel import predict_spending
 regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b' #a sequence of characters that specifies a search pattern in text, used for the following email valdiaiton function
 Window.size = (400,700) #sets screen size
 
@@ -72,17 +83,24 @@ def check(email):
         return True
     else:
         return False
-class Graph(BoxLayout):
-    
-    signal = [7, 89.6, 45.-56.34]
-    signal = np.array(signal)
-    plt.plot(signal)
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    
+class MLGraph(BoxLayout):
+
+    doc_ref = db.collection(u'accounts').document(userEmail)
+    data = doc_ref.get().to_dict()
+    userData = literal_eval(data.get(u'data').strip())
+    totalArr = userData
+    print(totalArr)
+    if len(totalArr) >29: #checks if there is more than 29 days of data
+        predictions = predict_spending(totalArr)
+        days_of_week = ['Mon', 'Tue', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun']
+        plot = plt.scatter(days_of_week, predictions)
+        plt.ylabel("Prediction Amount of Money Spent/$")
+        plt.xlabel("Days")
+    else:
+        fig = plt.figure()
+        ax = fig.add_subplot()
     def __init__(self,**kwargs): 
         super().__init__(**kwargs)
-
         self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
 
     
@@ -93,7 +111,7 @@ class StartScreen(Screen):
     pass
 class HomeScreen(Screen):
     welcome_text = StringProperty("")
-
+    status_info = StringProperty("")
     def __init__(self,**kwargs): 
         super(HomeScreen, self).__init__(**kwargs)
         Clock.schedule_interval(self.welcomeString, 1) #need this to constaly update the screen as everything will be run at startup once
