@@ -84,15 +84,13 @@ def check(email):
     else:
         return False
 class MLGraph(BoxLayout):
-
     doc_ref = db.collection(u'accounts').document(userEmail)
     data = doc_ref.get().to_dict()
     userData = literal_eval(data.get(u'data').strip())
     totalArr = userData
     print(totalArr)
     if len(totalArr) >29: #checks if there is more than 29 days of data
-        predictions = predict_spending(totalArr)
-        days_of_week = ['Mon', 'Tue', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun']
+        predictions,days_of_week = predict_spending(totalArr)
         plot = plt.scatter(days_of_week, predictions)
         plt.ylabel("Prediction Amount of Money Spent/$")
         plt.xlabel("Days")

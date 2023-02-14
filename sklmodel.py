@@ -4,7 +4,7 @@
 
 # In[1]:
 
-
+import datetime
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -52,16 +52,8 @@ def predict_spending(totalArr):
     augment = pd.DataFrame(date_sum, columns = ['Date', 'Day', 'Amount'])
     augment['Amount'] = add_noise(df['Amount'])
     df = pd.concat([df, augment])
-
-
     df['Amount'].clip(lower=0, inplace=True)
     df['Amount'] = df['Amount'].clip(lower=0)
-
-
-    #sns.jointplot(x = df['Day'].values, y = df['Amount'].values, data=df,kind='reg')
-
-
-    # In[9]:
 
 
     #Declaring x and y variables:
@@ -92,15 +84,20 @@ def predict_spending(totalArr):
 
     # In[23]:
 
-
+    #Rolling Date Feature:
+    current_day = datetime.datetime.now().weekday()
+    days_of_week = ['Mon', 'Tue', 'Wed', 'Thurs', 'Fri', 'Sat', 'Sun']
+    days_of_week = days_of_week[current_day:] + days_of_week[:current_day]
+    days_dict = {'Mon' : 0, 'Tue' : 1, 'Wed' : 2, 'Thurs' : 3, 'Fri': 4, 'Sat' : 5, 'Sun' : 6}
+    days_num = [[days_dict[days_of_week[0]]],[days_dict[days_of_week[1]]],[days_dict[days_of_week[2]]],[days_dict[days_of_week[3]]], [days_dict[days_of_week[4]]], [days_dict[days_of_week[5]]], [days_dict[days_of_week[6]]]]
     #Comparing the best RMSE:
     if rfr_rmse < linear_reg_rmse and rfr_rmse < svr_rmse:
-        predictions = rfr.predict([[0],[1],[2],[3],[4],[5],[6]])
+        predictions = rfr.predict(days_num)
     elif svr_rmse < rfr_rmse and svr_rmse < linear_reg_rmse:
-        predictions = svr.predict([[0],[1],[2],[3],[4],[5],[6]])
+        predictions = svr.predict(days_num)
     elif linear_reg_rmse < rfr_rmse and linear_reg_rmse < svr_rmse:
-        predictions = linear_reg.predict([[0],[1],[2],[3],[4],[5],[6]])
+        predictions = linear_reg.predict(days_num)
     else:
-        predictions = rfr.predict([[0],[1],[2],[3],[4],[5],[6]])
-    return(predictions)
+        predictions = rfr.predict(days_num)
+    return(predictions,days_of_week)
     # In[ ]:
