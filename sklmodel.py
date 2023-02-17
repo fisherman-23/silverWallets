@@ -27,6 +27,8 @@ from sklearn.ensemble import RandomForestRegressor as RFR
 def predict_spending(totalArr):
     date_sum = []
     indiv_sum = 0
+    if len(totalArr) == 0: #data validation
+        return(False, [],[])
     for x in range(-2, len(totalArr)-1):
         if totalArr[x][0] == totalArr[x+1][0]:
             indiv_sum += float(totalArr[x][2])
@@ -36,7 +38,9 @@ def predict_spending(totalArr):
             indiv_sum = 0 
     date_sum.append(date_sum[0])
     date_sum.pop(0)
-
+    print(len(date_sum))
+    if len(date_sum) < 30: #checks if theres enough data for model to be relatively accurate
+        return(False,[],[])
 
     #Creation of DataFrame:
     df = pd.DataFrame(date_sum, columns = ['Date', 'Day', 'Amount'])
@@ -99,5 +103,5 @@ def predict_spending(totalArr):
         predictions = linear_reg.predict(days_num)
     else:
         predictions = rfr.predict(days_num)
-    return(predictions,days_of_week)
+    return(True,predictions,days_of_week)
     # In[ ]:

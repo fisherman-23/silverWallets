@@ -73,6 +73,7 @@ selectedData = []
 amount = ''
 tax = ''
 payMeth = ''
+homeStatusString = ''
 def stringToDict(x): #converts json string into dict in python
     dictionary = dict(subString.split("=") for subString in x.split(";"))
     return(dictionary)
@@ -84,22 +85,35 @@ def check(email):
     else:
         return False
 class MLGraph(BoxLayout):
-    doc_ref = db.collection(u'accounts').document(userEmail)
-    data = doc_ref.get().to_dict()
-    userData = literal_eval(data.get(u'data').strip())
-    totalArr = userData
-    print(totalArr)
-    if len(totalArr) >29: #checks if there is more than 29 days of data
-        predictions,days_of_week = predict_spending(totalArr)
-        plot = plt.scatter(days_of_week, predictions)
-        plt.ylabel("Prediction Amount of Money Spent/$")
-        plt.xlabel("Days")
-    else:
-        fig = plt.figure()
-        ax = fig.add_subplot()
+    temp = []
+    def plotMLGraph(self,dt):
+        global homeStatusString
+        doc_ref = db.collection(u'accounts').document(userEmail)
+        data = doc_ref.get().to_dict()
+        userData = literal_eval(data.get(u'data').strip())
+        totalArr = userData
+        verification,predictions,days_of_week = predict_spending(totalArr)
+        # verification will be True if data instance is more than 30, *required for RMSE to be reasonable
+        if verification == True: 
+            if self.temp != totalArr: #would not update if data still the sames
+                self.temp = totalArr
+                plt.cla()
+                self.clear_widgets()
+                plot = plt.scatter(days_of_week, predictions)
+                plt.ylabel("Prediction Amount of Money Spent/$")
+                plt.xlabel("Days")
+                homeStatusString = ''
+                self.add_widget(FigureCanvasKivyAgg(plt.gcf()))      
+        else:
+            plt.cla()
+            self.clear_widgets()
+            homeStatusString = 'More Data Required'
+            fig = plt.figure()
+            ax = fig.add_subplot()
+            self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
     def __init__(self,**kwargs): 
         super().__init__(**kwargs)
-        self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+        Clock.schedule_interval(self.plotMLGraph, 5)
 
     
 class WindowManager(ScreenManager):
@@ -116,7 +130,9 @@ class HomeScreen(Screen):
         #box = self.ids['box']
 
     def welcomeString(self,dt):
+        global homeStatusString
         self.welcome_text = 'Welcome {},'.format(userEmail.split('@')[0]) #splits user email for use in welcome screen
+        self.status_info = homeStatusString
         #print(self.welcome_text)
         #print(userEmail,'1')
 class SettingScreen(Screen):
