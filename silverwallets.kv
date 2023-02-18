@@ -14,7 +14,7 @@ WindowManager:
     ManualInputScreen
     SettingScreen
 <MLGraph>
-
+<FinanceGraph>
     
 <StartScreen>
     name: "start"
@@ -65,13 +65,11 @@ WindowManager:
                 hint_text: "Enter email"
                 font_name: "ProductSans"
                 multiline: False
-                on_text_validate: root.on_text_validate_email(self)
             TextInput:
                 id: pw
                 hint_text: "Enter password"
                 font_name: "ProductSans"
                 multiline: False
-                on_text_validate: root.on_text_validate_pw(self)
             Label:
                 text: root.status_info
                 color: 0.5,0,0,1
@@ -110,13 +108,11 @@ WindowManager:
                 hint_text: "Enter email"
                 font_name: "ProductSans"
                 multiline: False
-                on_text_validate: root.on_text_validate_email(self)
             TextInput:
                 id: pw
                 hint_text: "Enter password"
                 font_name: "ProductSans"
                 multiline: False
-                on_text_validate: root.on_text_validate_pw(self)
             Label:
                 text: "Average monthly income"
                 color: 0,0,0,1
@@ -128,7 +124,6 @@ WindowManager:
                 font_name: "ProductSans"
                 multiline: False
                 input_filter: "float"
-                on_text_validate: root.on_text_validate_target(self) 
             Label:
                 text: root.status_info
                 color: 0.5,0,0,1
@@ -155,14 +150,36 @@ WindowManager:
                     root.manager.transition.direction = "right"
 <HomeScreen>
     name: "home"
-    BoxLayout:
-        orientation: "vertical"
-        MLGraph
-        Label:
-            text: root.status_info
-            color: 0,0,0.7,1
-            size_hint: None, 0.2
-            font_name: "ProductSansBold"
+    TabbedPanel:
+        tab_pos: 'bottom_mid'
+        do_default_tab: False
+        TabbedPanelItem:
+            text: "ML Graph"
+            BoxLayout:
+                canvas:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                orientation: "vertical"
+                MLGraph
+                Label:
+                    text: root.status_info
+                    color: 0,0,0.7,1
+                    size_hint: 1, 0.12
+                    font_name: "ProductSansBold"
+        TabbedPanelItem:
+            text: "ASL Graph"
+            BoxLayout:
+                canvas:
+                    Color:
+                        rgba: 1, 1, 1, 1
+                    Rectangle:
+                        size: self.size
+                        pos: self.pos
+                id: asl
+                FinanceGraph
 
     FloatLayout:
 
@@ -282,7 +299,6 @@ WindowManager:
             hint_text: "Enter your expenditure (SGD)"
             font_name: "ProductSans"
             multiline: False
-            on_text_validate: root.text_field_amount(self)
             size_hint: 1, 0.4
             input_filter: "float"
         BoxLayout:
@@ -305,8 +321,7 @@ WindowManager:
                 background_color: 0.15, 0.47, 0.9, .85
                 on_press: 
                     root.tag = "water"
-                    root.onButtonClicked()
-                    self.background_color: (0.15, 0.47, 0.9, .85)
+                    root.status_info = "water"
 
             Button:
                 id: elec
@@ -314,31 +329,41 @@ WindowManager:
                 font_name: "ProductSansBold"
                 background_normal: ''
                 background_color: 0.96, 0.8, 0.15, .85
-                on_press: root.tag = "electric"
+                on_press:
+                    root.tag = "electric"
+                    root.status_info = "electric"
             Button:
                 text: "Essentials"
                 font_name: "ProductSansBold"
                 background_normal: ''
                 background_color: 0.67, 0.8, 0.69, .85
-                on_press: root.tag = "essentials"
+                on_press:
+                    root.tag = "essentials"
+                    root.status_info = "essentials"
             Button:
                 text: "Rent"
                 font_name: "ProductSansBold"
                 background_normal: ''
                 background_color: 0.93, 0.32, 0.32, .85
-                on_press: root.tag = "rent"
+                on_press:
+                    root.tag = "rent"
+                    root.status_info = "rent"
             Button:
                 text: "Food"
                 font_name: "ProductSansBold"
                 background_normal: ''
                 background_color: 0.9, 0.65, 0.35, .85
-                on_press: root.tag = "food"
+                on_press:
+                    root.tag = "food"
+                    root.status_info = "food"
             Button:
                 text: "Extras"
                 font_name: "ProductSansBold"
                 background_normal: ''
                 background_color: 0.3, 0.2, 0.7, .85
-                on_press: root.tag = "extras"
+                on_press:
+                    root.tag = "extras"
+                    root.status_info = "extras"
 
         Label:
             text: root.status_info
@@ -558,7 +583,6 @@ WindowManager:
                     hint_text: 'Enter updated income'
                     font_name: "ProductSans"
                     input_filter: "float"
-                    on_text_validate: root.income(self)
                 Button:
                     background_normal: ''
                     background_color: 0.1, 1, 0.1, .85

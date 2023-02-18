@@ -49,8 +49,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor as RFR
 from sklmodel import predict_spending
+from financial import ASLModel
 regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b' #a sequence of characters that specifies a search pattern in text, used for the following email valdiaiton function
-Window.size = (400,700) #sets screen size
+Window.size = (550,800) #sets screen size
 
 Window.clearcolor = (1, 1, 1, 1) #sets bg colour
 databaseURL = "https://silverwallets-c13d5.firebaseio.com" #url to get the firebase database
@@ -74,6 +75,7 @@ amount = ''
 tax = ''
 payMeth = ''
 homeStatusString = ''
+
 def stringToDict(x): #converts json string into dict in python
     dictionary = dict(subString.split("=") for subString in x.split(";"))
     return(dictionary)
@@ -86,7 +88,9 @@ def check(email):
         return False
 class MLGraph(BoxLayout):
     temp = []
+    
     def plotMLGraph(self,dt):
+        plt.figure(1)
         global homeStatusString
         doc_ref = db.collection(u'accounts').document(userEmail)
         data = doc_ref.get().to_dict()
@@ -94,26 +98,66 @@ class MLGraph(BoxLayout):
         totalArr = userData
         verification,predictions,days_of_week = predict_spending(totalArr)
         # verification will be True if data instance is more than 30, *required for RMSE to be reasonable
-        if verification == True: 
+        if verification == True:
             if self.temp != totalArr: #would not update if data still the sames
                 self.temp = totalArr
                 plt.cla()
                 self.clear_widgets()
-                plot = plt.scatter(days_of_week, predictions)
+                plt.scatter(days_of_week, predictions)
                 plt.ylabel("Prediction Amount of Money Spent/$")
                 plt.xlabel("Days")
-                homeStatusString = ''
-                self.add_widget(FigureCanvasKivyAgg(plt.gcf()))      
+                homeStatusString = "Predicted Spendings: ${},${},${},${},${}\n Previous Week's Spendings: ${}, ${}, ${}, ${}, ${}".format(round(predictions[0]),round(predictions[1]),round(predictions[2]),round(predictions[3]),round(predictions[4]),42,65,32,45,64)
+                self.add_widget(FigureCanvasKivyAgg(plt.gcf()))  
         else:
             plt.cla()
             self.clear_widgets()
             homeStatusString = 'More Data Required'
-            fig = plt.figure()
-            ax = fig.add_subplot()
             self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
     def __init__(self,**kwargs): 
         super().__init__(**kwargs)
-        Clock.schedule_interval(self.plotMLGraph, 5)
+        Clock.schedule_interval(self.plotMLGraph, 9)
+class FinanceGraph(BoxLayout):
+    temp = []
+    def plotASLGraph(self,dt):
+        plt.figure(2)
+        doc_ref = db.collection(u'accounts').document(userEmail)
+        data = doc_ref.get().to_dict()
+        userData = literal_eval(data.get(u'data').strip())
+        totalArr = userData
+        target = literal_eval(data.get(u'target').strip())
+        if self.temp != totalArr:
+            #Formatting the graphs
+            plt.cla()
+            self.clear_widgets()
+            self.temp = totalArr
+            cyear,cmonth,date_x,ASL,spending_y,income_a,total,water_a,income_a,elec_a,rent_a,saving_a,food_a,extras,total_debt = ASLModel(totalArr,target)
+            plt.subplot(2,1,1)
+            plt.xlabel('Date')
+            plt.ylabel('Spending (SGD)')
+            plt.xticks(range(1,calendar.monthrange(cyear,cmonth)[1]+1))
+            plt.plot(date_x,ASL,color='red')
+            plt.bar(date_x,spending_y,color='green')
+            remaining = income_a - total
+            plt.subplot(2,1,2)
+            #Deciding if the pie chart should show 'Remaining' or 'Debt' depending if you overspent or not
+            if remaining >= 0:
+                labels = ['Water Bills','Electricity Bills','Rent','Savings','Food','Extras','Remaining']
+                piechart = np.array([water_a*100/income_a, elec_a*100/income_a, rent_a*100/income_a, saving_a*100/income_a, food_a*100/income_a, extras*100/income_a, (remaining*100/income_a)])
+            else:
+                remaining *= -1
+                total_debt += remaining
+                labels = ['Water Bills','Electricity Bills','Rent','Savings','Food','Extras','Debt']
+                piechart = np.array([water_a*100/total, elec_a*100/total, rent_a*100/total, saving_a*100/total, food_a*100/total, extras*100/total, remaining*100/total])
+            #Formatting the piechart
+            perSpending = piechart.tolist()#converts np array to python list
+            labels = [f'{l}, {s:0.1f}%' for l, s in zip(labels, perSpending)]
+            plt.pie(piechart)
+            plt.legend(piechart, labels=labels, loc='lower left', prop={"size":7})
+            self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+    def __init__(self,**kwargs): 
+        super().__init__(**kwargs)
+        Clock.schedule_interval(self.plotASLGraph, 10)
+        #self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
 
     
 class WindowManager(ScreenManager):
@@ -144,10 +188,8 @@ class SettingScreen(Screen):
         userPW = ''
         self.manager.current = "start"
         #self.manager.transition.direction = 'right'
-    def income(self, widget): #function that gets value of email text field when confirm button pressed
-        self.incomeAmt = widget.text.strip()
-        print(self.incomeAmt)
     def update(self):
+        self.incomeAmt = self.ids['income'].text.strip()
         global userEmail
         try: #data verfication
             if self.incomeAmt == '':
@@ -168,15 +210,12 @@ class ManualInputScreen(Screen):
     date_label = StringProperty('')
     tag = StringProperty('')
     status_info =StringProperty('')
-    def onButtonClicked(self):
-        pass
-    def text_field_amount(self, widget):
-        self.tf_amount = widget.text.strip() #strip to prevent sending blank spaces
-        s =  self.tf_amount#removes trailing 0 to keep data consistent
-        self.tf_amount = s.rstrip('0').rstrip('.') if '.' in s else s
 
     def submitData(self):
         global userEmail
+        self.tf_amount = self.ids['amt'].text.strip() #strip to prevent sending blank spaces
+        s =  self.tf_amount#removes trailing 0 to keep data consistent
+        self.tf_amount = s.rstrip('0').rstrip('.') if '.' in s else s
         try:
             if self.tf_amount == '' or self.current_date == '' or self.tag == '':
                 #ask to enter value
@@ -515,6 +554,8 @@ class LogInScreen(Screen):
         global userPW
         #print(self.text_input_email)
         #ref = db.collection(u'accounts').document(u'dMo8Os9D5xwAWwgNtqIr');
+        self.text_input_email = self.ids['email'].text.strip()
+        self.text_input_pw = self.ids['pw'].text.strip()
         try: #validation checks
             if self.text_input_email == '' or self.text_input_pw == '':
                 print('empty fields')
@@ -540,22 +581,12 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
     email_info = StringProperty("")
     status_info = StringProperty("")
     
-    def on_text_validate_email(self, widget): #function that gets value of email text field when confirm button pressed
-        self.text_input_email = widget.text.strip()
-        print(self.text_input_email)
-
-    def on_text_validate_pw(self, widget):
-        self.text_input_pw = widget.text.strip()
-        print(self.text_input_pw)
-
-    def on_text_validate_target(self, widget):
-        self.text_input_target = widget.text.strip()
-        print(self.text_input_target)
-    
     def signup_to_firebase(self):
         global userEmail
         global userPW
-        #print(self.text_input_email)
+        self.text_input_email = self.ids['email'].text.strip() #gets values from text field
+        self.text_input_pw = self.ids['pw'].text.strip()
+        self.text_input_target = self.ids['limit'].text.strip()
         try: #data verfication
             if self.text_input_email == '' or self.text_input_pw == '' or self.text_input_target == '':
                 print('empty fields')

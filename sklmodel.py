@@ -38,7 +38,6 @@ def predict_spending(totalArr):
             indiv_sum = 0 
     date_sum.append(date_sum[0])
     date_sum.pop(0)
-    print(len(date_sum))
     if len(date_sum) < 30: #checks if theres enough data for model to be relatively accurate
         return(False,[],[])
 
