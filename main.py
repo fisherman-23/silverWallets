@@ -19,7 +19,7 @@ from kivy.uix.tabbedpanel import TabbedPanel
 import requests
 from kivy.uix.camera import Camera
 import time
-import datetime
+from datetime import datetime, timedelta
 from kivy.uix.dropdown import DropDown
 from kivy.uix.gridlayout import GridLayout
 from kivymd.uix.pickers import MDDatePicker
@@ -74,8 +74,8 @@ selectedData = []
 amount = ''
 tax = ''
 payMeth = ''
-homeStatusString = ''
-
+mlStatusString = ''
+aslStatusString = ''
 def stringToDict(x): #converts json string into dict in python
     dictionary = dict(subString.split("=") for subString in x.split(";"))
     return(dictionary)
@@ -91,7 +91,7 @@ class MLGraph(BoxLayout):
     
     def plotMLGraph(self,dt):
         plt.figure(1)
-        global homeStatusString
+        global mlStatusString
         doc_ref = db.collection(u'accounts').document(userEmail)
         data = doc_ref.get().to_dict()
         userData = literal_eval(data.get(u'data').strip())
@@ -100,18 +100,68 @@ class MLGraph(BoxLayout):
         # verification will be True if data instance is more than 30, *required for RMSE to be reasonable
         if verification == True:
             if self.temp != totalArr: #would not update if data still the sames
+                five_days_ago = datetime.now() - timedelta(days=5)
+                formatted_date = five_days_ago.strftime("%Y-%m-%d") # format as year-month-day string
+                day = formatted_date.split('-')[2]
+                month = formatted_date.split('-')[1]
+                year = formatted_date.split('-')[0]
+                print(day,month,year)
+                arr = []
+                for i in totalArr:
+                    if int(i[0].split('-')[0]) == int(year):
+                        if int(i[0].split('-')[1]) == int(month):
+                            print(int(i[0].split('-')[2]))
+                            if int(i[0].split('-')[2]) > int(day) and int(i[0].split('-')[2]) <= int(datetime.now().strftime("%Y-%m-%d").split('-')[2]):
+                                arr.append(i)
+                print(arr)
+                indiv_sum =0
+                date_sum = []
+                arr2 = arr
+                for x in range(-2, len(arr2)-1):
+                    if arr2[x][0] == arr2[x+1][0]:
+                        indiv_sum += float(arr2[x][2])
+                    else:
+                        indiv_sum += float(arr2[x][2])
+                        date_sum.append([arr2[x][0],arr2[x][1],indiv_sum])
+                        indiv_sum = 0 
+                date_sum.append(date_sum[0])
+                date_sum.pop(0)
+                date_sum.pop(len(date_sum)-1)
+
+                spending_dict = {}
+                past_days = date_sum
+                # loop over the past_days array and add the spending value to the dictionary
+                for day in past_days:
+                    spending_dict[datetime.strptime(day[0], '%Y-%m-%d').date()] = day[2]
+
+                # create an array of the past 5 dates
+                dates = [datetime.now().date() - timedelta(days=i) for i in range(4,-1,-1)]
+
+                # create an array to hold the spending values for each date
+                spending_array = []
+
+                # loop over the past 5 dates and add the spending value from the dictionary if it exists,
+                # or add 0 if it doesn't exist
+                for date in dates:
+                    if date in spending_dict:
+                        spending_array.append(spending_dict[date])
+                    else:
+                        spending_array.append(0)
+
+                # print the resulting spending array
+                print(spending_array)
                 self.temp = totalArr
                 plt.cla()
                 self.clear_widgets()
                 plt.scatter(days_of_week, predictions)
                 plt.ylabel("Prediction Amount of Money Spent/$")
                 plt.xlabel("Days")
-                homeStatusString = "Predicted Spendings: ${},${},${},${},${}\n Previous Week's Spendings: ${}, ${}, ${}, ${}, ${}".format(round(predictions[0]),round(predictions[1]),round(predictions[2]),round(predictions[3]),round(predictions[4]),42,65,32,45,64)
+                mlStatusString = "Predicted Spendings: ${},${},${},${},${}\n Previous Week's Spendings: ${}, ${}, ${}, ${}, ${}".format(round(predictions[0]),round(predictions[1]),round(predictions[2]),round(predictions[3]),round(predictions[4]),round(spending_array[0]),round(spending_array[1]),round(spending_array[2]),round(spending_array[3]),round(spending_array[4]))
                 self.add_widget(FigureCanvasKivyAgg(plt.gcf()))  
         else:
             plt.cla()
             self.clear_widgets()
-            homeStatusString = 'More Data Required'
+            mlStatusString = 'More Data Required'
             self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
     def __init__(self,**kwargs): 
         super().__init__(**kwargs)
@@ -119,18 +169,21 @@ class MLGraph(BoxLayout):
 class FinanceGraph(BoxLayout):
     temp = []
     def plotASLGraph(self,dt):
+        global aslStatusString
         plt.figure(2)
         doc_ref = db.collection(u'accounts').document(userEmail)
         data = doc_ref.get().to_dict()
         userData = literal_eval(data.get(u'data').strip())
         totalArr = userData
         target = literal_eval(data.get(u'target').strip())
-        if self.temp != totalArr:
+        if self.temp != 0:
             #Formatting the graphs
             plt.cla()
+            plt.clf()
             self.clear_widgets()
             self.temp = totalArr
-            cyear,cmonth,date_x,ASL,spending_y,income_a,total,water_a,income_a,elec_a,rent_a,saving_a,food_a,extras,total_debt = ASLModel(totalArr,target)
+            cyear,cmonth,date_x,ASL,spending_y,income_a,total,water_a,income_a,elec_a,rent_a,saving_a,food_a,extras,total_debt = ASLModel(self.temp,target)
+            print(self.temp)
             plt.subplot(2,1,1)
             plt.xlabel('Date')
             plt.ylabel('Spending (SGD)')
@@ -154,6 +207,7 @@ class FinanceGraph(BoxLayout):
             plt.pie(piechart)
             plt.legend(piechart, labels=labels, loc='lower left', prop={"size":7})
             self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+            aslStatusString = 'Total Spent: ${}\nTotal Remaining: ${}\n Total Debt: ${}'.format(round(total,2),round(income_a-total,2),round(total_debt,2))
     def __init__(self,**kwargs): 
         super().__init__(**kwargs)
         Clock.schedule_interval(self.plotASLGraph, 10)
@@ -167,16 +221,19 @@ class StartScreen(Screen):
     pass
 class HomeScreen(Screen):
     welcome_text = StringProperty("")
-    status_info = StringProperty("")
+    ml_status_info = StringProperty("")
+    asl_status_info = StringProperty("")
     def __init__(self,**kwargs): 
         super(HomeScreen, self).__init__(**kwargs)
         Clock.schedule_interval(self.welcomeString, 1) #need this to constaly update the screen as everything will be run at startup once
         #box = self.ids['box']
 
     def welcomeString(self,dt):
-        global homeStatusString
+        global mlStatusString
+        global aslStatusString
         self.welcome_text = 'Welcome {},'.format(userEmail.split('@')[0]) #splits user email for use in welcome screen
-        self.status_info = homeStatusString
+        self.ml_status_info = mlStatusString
+        self.asl_status_info = aslStatusString
         #print(self.welcome_text)
         #print(userEmail,'1')
 class SettingScreen(Screen):
@@ -258,7 +315,7 @@ class ManualInputScreen(Screen):
         self.current_date = str(value)
         
     def showDatePicker(self): #code to show date picker and calls save function when pressed
-        Window.size = (400,701)
+        Window.size = (500,801)
         date_dialog = MDDatePicker()
         date_dialog.bind(on_save=self.on_save)
         date_dialog.open()
@@ -317,10 +374,8 @@ class HistoryScreen(Screen):
     def remove(self):
         doc_ref = db.collection(u'accounts').document(userEmail)
         data = doc_ref.get().to_dict()
-        print(data)
         userData = literal_eval(data.get('data').strip()) #what is stored in firebase  
         global selectedData
-        print(selectedData)
         for i in selectedData:
             temp = str(list(dict.values(i)))
             temp = temp.strip("['")
@@ -336,7 +391,6 @@ class HistoryScreen(Screen):
             tag = str(amtNTag[1]).strip()
             day = time.strptime(day, "%A").tm_wday
             arr = [date,day,amt,tag]
-            print(userData,arr)
             if arr in userData: #check if value to be deleted exists
                 userData.remove(arr) #remove the value
                 doc_ref.update({u' data ': str(userData)}) #update to firebase
@@ -485,23 +539,15 @@ class PostCameraScreen(Screen):
                 print(self.arrData)
 
                 self.arrReceiptData.append(str(date))
-                print(1)
                 self.arrReceiptData.append(day)
-                print(1)
                 self.arrReceiptData.append(str(amount))
-                print(1)
                 self.arrReceiptData.append(self.tag)
-                print(1)
                 self.arrReceiptData.append(str(merchName))
-                print(1)
                 self.arrReceiptData.append(str(merchAddress))
-                print(1)
                 self.arrReceiptData.append(str(timeData))
-                print(1)
                 self.arrReceiptData.append(str(tax))
-                print(1)
                 self.arrReceiptData.append(str(payMeth))
-                print(1)
+
 
                 doc_ref = db.collection(u'accounts').document(userEmail)
                 data = doc_ref.get().to_dict()

@@ -27,7 +27,7 @@ from sklearn.ensemble import RandomForestRegressor as RFR
 def predict_spending(totalArr):
     date_sum = []
     indiv_sum = 0
-    if len(totalArr) == 0: #data validation
+    if len(totalArr) < 30: #data validation
         return(False, [],[])
     for x in range(-2, len(totalArr)-1):
         if totalArr[x][0] == totalArr[x+1][0]:

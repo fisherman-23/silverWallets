@@ -165,13 +165,14 @@ WindowManager:
                 orientation: "vertical"
                 MLGraph
                 Label:
-                    text: root.status_info
+                    text: root.ml_status_info
                     color: 0,0,0.7,1
                     size_hint: 1, 0.12
                     font_name: "ProductSansBold"
         TabbedPanelItem:
             text: "ASL Graph"
             BoxLayout:
+                orientation: "vertical"
                 canvas:
                     Color:
                         rgba: 1, 1, 1, 1
@@ -180,6 +181,12 @@ WindowManager:
                         pos: self.pos
                 id: asl
                 FinanceGraph
+                Label:
+                    text: root.asl_status_info
+                    color: 0,0,0.7,1
+                    size_hint: 1, 0.12
+                    font_name: "ProductSansBold"
+                    
 
     FloatLayout:
 
