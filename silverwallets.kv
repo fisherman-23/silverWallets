@@ -114,13 +114,19 @@ WindowManager:
                 font_name: "ProductSans"
                 multiline: False
             Label:
-                text: "Average monthly income"
+                text: "Average monthly income & Percentage Savings"
                 color: 0,0,0,1
                 size_hint: 1,0.23
                 font_name: "ProductSansBold"
             TextInput:
                 id: limit
                 hint_text: "Enter amount in SGD"
+                font_name: "ProductSans"
+                multiline: False
+                input_filter: "float"
+            TextInput:
+                id: saving
+                hint_text: "Enter percentage of targeted savings per month (%)"
                 font_name: "ProductSans"
                 multiline: False
                 input_filter: "float"
@@ -276,6 +282,19 @@ WindowManager:
             font_name: "ProductSans"
             color: 0.1, 0.1, 0.7,1
             font_name: "ProductSansBold"
+        BoxLayout:
+            size_hint: 1,0.2
+            orientation: "horizontal"
+            TextInput:
+                hint_text: "Enter Debt ($)"
+                multiline: False
+                input_filter: "float"
+                id: debt
+            Button:
+                text: "Submit"
+                background_normal: ''
+                background_color: 0, 0, 0, .85
+                on_press: root.submit_debt()
         BoxLayout:
             
             orientation: "horizontal"
@@ -595,7 +614,21 @@ WindowManager:
                     background_color: 0.1, 1, 0.1, .85
                     text: "Update"
                     font_name: "ProductSansBold"
-                    on_press: root.update()
+                    on_press: root.update_income()
+            BoxLayout:
+                size_hint: 1,.2
+                TextInput:
+                    id: saving
+                    multiline: False
+                    hint_text: 'Enter updated saving percentage (%)'
+                    font_name: "ProductSans"
+                    input_filter: "float"
+                Button:
+                    background_normal: ''
+                    background_color: 0.1, 1, 0.1, .85
+                    text: 'Update'
+                    font_name: "ProductSansBold"
+                    on_press: root.update_saving()
             Button:
                 background_normal: ''
                 background_color: 0.81, 0.81, 0.81, .85
@@ -603,11 +636,9 @@ WindowManager:
                 font_name: "ProductSansBold"
                 color: 1,0.1,0.1,1
                 size_hint: 1, .2
-            Button:
-                background_normal: ''
-                background_color: 0.81, 0.81, 0.81, .85
-                text: "Info"
-                font_name: "ProductSansBold"
+            Label:
+                text: "Jing Shun: UI, Integration, Database\nXi Ian: Financial\nAiden: ML Model"
+                font_name: "ProductSans"
                 color: 0.4,0.4,1,1
                 size_hint: 1, .2
             Label:

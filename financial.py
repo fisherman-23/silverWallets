@@ -10,7 +10,7 @@ import time
 import random
 import datetime
 
-def ASLModel(totalArr,income):
+def ASLModel(totalArr,income,savingPer):
 
     #Finding the current month and year
     today = datetime.datetime.now()
@@ -37,7 +37,7 @@ def ASLModel(totalArr,income):
     #Input for monthly income
     income_a = float(income)
     #Input for savings for the month, and ensures that the saving amount is reasonable
-    saving_a = float(1200)
+    saving_a = income_a * (savingPer/100)
     #Adds the saving amount to the total savings as well as the total amount spent for the month
     saving = 0
     saving += saving_a

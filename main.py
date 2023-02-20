@@ -90,11 +90,12 @@ class MLGraph(BoxLayout):
     temp = []
     
     def plotMLGraph(self,dt):
+        #plt figure 1 refers to the mpl figure for MLGraph
         plt.figure(1)
         global mlStatusString
         doc_ref = db.collection(u'accounts').document(userEmail)
         data = doc_ref.get().to_dict()
-        userData = literal_eval(data.get(u'data').strip())
+        userData = literal_eval(data.get(u'data').strip()) #gets data from database
         totalArr = userData
         verification,predictions,days_of_week = predict_spending(totalArr)
         # verification will be True if data instance is more than 30, *required for RMSE to be reasonable
@@ -102,36 +103,33 @@ class MLGraph(BoxLayout):
             if self.temp != totalArr: #would not update if data still the sames
                 five_days_ago = datetime.now() - timedelta(days=5)
                 formatted_date = five_days_ago.strftime("%Y-%m-%d") # format as year-month-day string
-                day = formatted_date.split('-')[2]
+                day = formatted_date.split('-')[2] #gets the respective day,monht year values
                 month = formatted_date.split('-')[1]
                 year = formatted_date.split('-')[0]
-                print(day,month,year)
                 arr = []
-                for i in totalArr:
+                for i in totalArr: #gets the values for past 5 days
                     if int(i[0].split('-')[0]) == int(year):
                         if int(i[0].split('-')[1]) == int(month):
-                            print(int(i[0].split('-')[2]))
                             if int(i[0].split('-')[2]) > int(day) and int(i[0].split('-')[2]) <= int(datetime.now().strftime("%Y-%m-%d").split('-')[2]):
                                 arr.append(i)
-                print(arr)
                 indiv_sum =0
                 date_sum = []
                 arr2 = arr
-                for x in range(-2, len(arr2)-1):
+                for x in range(-2, len(arr2)-1): #gets the sum for each day
                     if arr2[x][0] == arr2[x+1][0]:
                         indiv_sum += float(arr2[x][2])
                     else:
                         indiv_sum += float(arr2[x][2])
                         date_sum.append([arr2[x][0],arr2[x][1],indiv_sum])
                         indiv_sum = 0 
-                date_sum.append(date_sum[0])
+                date_sum.append(date_sum[0]) 
                 date_sum.pop(0)
-                date_sum.pop(len(date_sum)-1)
+                date_sum.pop(len(date_sum)-1) 
 
                 spending_dict = {}
                 past_days = date_sum
                 # loop over the past_days array and add the spending value to the dictionary
-                for day in past_days:
+                for day in past_days: 
                     spending_dict[datetime.strptime(day[0], '%Y-%m-%d').date()] = day[2]
 
                 # create an array of the past 5 dates
@@ -148,10 +146,8 @@ class MLGraph(BoxLayout):
                     else:
                         spending_array.append(0)
 
-                # print the resulting spending array
-                print(spending_array)
                 self.temp = totalArr
-                plt.cla()
+                plt.cla() #clears all the values in graph, clean state
                 self.clear_widgets()
                 plt.scatter(days_of_week, predictions)
                 plt.ylabel("Prediction Amount of Money Spent/$")
@@ -161,8 +157,8 @@ class MLGraph(BoxLayout):
         else:
             plt.cla()
             self.clear_widgets()
-            mlStatusString = 'More Data Required'
-            self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
+            mlStatusString = 'More Data Required (30 Days)'
+            self.add_widget(FigureCanvasKivyAgg(plt.gcf())) #plots the graph onto the screen
     def __init__(self,**kwargs): 
         super().__init__(**kwargs)
         Clock.schedule_interval(self.plotMLGraph, 9)
@@ -170,21 +166,22 @@ class FinanceGraph(BoxLayout):
     temp = []
     def plotASLGraph(self,dt):
         global aslStatusString
+        #plt figure 2 refers to the figure for ASLGraph
         plt.figure(2)
         doc_ref = db.collection(u'accounts').document(userEmail)
         data = doc_ref.get().to_dict()
         userData = literal_eval(data.get(u'data').strip())
         totalArr = userData
         target = literal_eval(data.get(u'target').strip())
+        saving = literal_eval(data.get(u'saving').strip())
         if self.temp != 0:
             #Formatting the graphs
             plt.cla()
             plt.clf()
             self.clear_widgets()
             self.temp = totalArr
-            cyear,cmonth,date_x,ASL,spending_y,income_a,total,water_a,income_a,elec_a,rent_a,saving_a,food_a,extras,total_debt = ASLModel(self.temp,target)
-            print(self.temp)
-            plt.subplot(2,1,1)
+            cyear,cmonth,date_x,ASL,spending_y,income_a,total,water_a,income_a,elec_a,rent_a,saving_a,food_a,extras,total_debt = ASLModel(self.temp,target,saving)
+            plt.subplot(2,1,1) #creates diff subplots for bar graph and pie chart
             plt.xlabel('Date')
             plt.ylabel('Spending (SGD)')
             plt.xticks(range(1,calendar.monthrange(cyear,cmonth)[1]+1))
@@ -245,8 +242,8 @@ class SettingScreen(Screen):
         userPW = ''
         self.manager.current = "start"
         #self.manager.transition.direction = 'right'
-    def update(self):
-        self.incomeAmt = self.ids['income'].text.strip()
+    def update_income(self):
+        self.incomeAmt = self.ids['income'].text.strip() #gets value from input field
         global userEmail
         try: #data verfication
             if self.incomeAmt == '':
@@ -257,10 +254,28 @@ class SettingScreen(Screen):
             else:
                 doc_ref = db.collection(u'accounts').document(userEmail)
                 doc_ref.update({u' target ': str(self.incomeAmt)})
-                self.status_info = "Successfully updated"
+                self.status_info = "Successfully updated" #updates the amt in database
+                self.incomeAmt = ''
+                self.ids['income'].text = '' #clears data from txt field
         except AttributeError:
             self.status_info = "Please fill in the field"
-
+    def update_saving(self):
+        self.savingPer = self.ids['saving'].text.strip()
+        global userEmail
+        try: #data verfication
+            if self.savingPer == '':
+                print('empty fields')
+                self.status_info = "Error! Empty field."
+            elif not ((float(self.savingPer) >=20 and float(self.savingPer) <=70)):
+                self.status_info = "Saving % must be between 20 and 70 inclusive"
+            else:
+                doc_ref = db.collection(u'accounts').document(userEmail)
+                doc_ref.update({u' saving ': str(self.savingPer)})
+                self.status_info = "Successfully updated" #updates the amt in database
+                self.savingPer = ''
+                self.ids['saving'].text = '' #clears data from txt field
+        except AttributeError:
+            self.status_info = "Please fill in the field"
 class ManualInputScreen(Screen):
     arrData = []
     current_date = ''
@@ -270,9 +285,11 @@ class ManualInputScreen(Screen):
 
     def submitData(self):
         global userEmail
+        print(userEmail)
         self.tf_amount = self.ids['amt'].text.strip() #strip to prevent sending blank spaces
         s =  self.tf_amount#removes trailing 0 to keep data consistent
         self.tf_amount = s.rstrip('0').rstrip('.') if '.' in s else s
+        print(self.tf_amount, self.current_date,self.tag)
         try:
             if self.tf_amount == '' or self.current_date == '' or self.tag == '':
                 #ask to enter value
@@ -280,11 +297,10 @@ class ManualInputScreen(Screen):
             elif not float(self.tf_amount) >0:
                 self.status_info = "Amount must be more than 0"
             else:
-
                 #print(self.current_date)
                 arr = self.current_date.split('-')
                 #print(arr)
-                temp = datetime.datetime(int(arr[0]), int(arr[1]), int(arr[2]))
+                temp = datetime(int(arr[0]), int(arr[1]), int(arr[2]))
                 day = temp.weekday()
                 #appends all data into a single array
                 self.arrData.append(self.current_date)
@@ -294,7 +310,6 @@ class ManualInputScreen(Screen):
                 print(self.arrData)
                 doc_ref = db.collection(u'accounts').document(userEmail) #gets the path of data to be sent
                 data = doc_ref.get().to_dict() #converts the array into a dict format
-
                 userData = literal_eval(data.get('data').strip()) #what is stored in firebase  
                 print(userData)
                 userData.append(self.arrData) #combines the exisitng data with data to be sent
@@ -315,7 +330,7 @@ class ManualInputScreen(Screen):
         self.current_date = str(value)
         
     def showDatePicker(self): #code to show date picker and calls save function when pressed
-        Window.size = (500,801)
+        Window.size = (550,801)
         date_dialog = MDDatePicker()
         date_dialog.bind(on_save=self.on_save)
         date_dialog.open()
@@ -369,14 +384,41 @@ class History(RecycleView):
 class NavigationScreen(Screen):
     pass
 class InputScreen(Screen):
-    pass
+    def submit_debt(self):
+        self.debtAmt = self.ids['debt'].text.strip() #gets value from input field
+        global userEmail
+        try: #data verfication
+            if self.debtAmt == '':
+                print('empty fields')
+                self.status_info = "Error! Empty field."
+            elif not float(self.debtAmt) > 0:
+                self.status_info = "Debt Repayment Value must be more than 0"
+            else:
+                year = datetime.today().strftime('%Y')
+                month = datetime.today().strftime('%m')
+                month = str(int(month))
+                day = datetime.today().strftime('%d')
+                string = '{}-{}-{}'.format(year,month,day)
+                arrData = [string,datetime.today().weekday(),str(self.debtAmt),'debt']
+                doc_ref = db.collection(u'accounts').document(userEmail) #gets the path of data to be sent
+                data = doc_ref.get().to_dict() #converts the array into a dict format
+                userData = literal_eval(data.get('data').strip()) #what is stored in firebase  
+                print(userData)
+                userData.append(arrData) #combines the exisitng data with data to be sent
+                doc_ref.update({u' data ': str(userData)}) # send to firebase
+                self.status_info = "Successfully updated" #updates the amt in database
+                self.debtAmt = ''
+                self.ids['debt'].text = '' #clears data from txt field
+                arrData = []
+        except AttributeError:
+            self.status_info = "Please fill in the field"
 class HistoryScreen(Screen):
     def remove(self):
         doc_ref = db.collection(u'accounts').document(userEmail)
         data = doc_ref.get().to_dict()
         userData = literal_eval(data.get('data').strip()) #what is stored in firebase  
         global selectedData
-        for i in selectedData:
+        for i in selectedData: #extracting respective values from array into variables
             temp = str(list(dict.values(i)))
             temp = temp.strip("['")
             temp = temp.strip("']")
@@ -442,13 +484,7 @@ class CameraScreen(Screen):
                 tempData = tempData.replace("\\n", "").replace("\t", "")
                 tempData = literal_eval(tempData)
                 print(tempData)
-                '''merchange name
-                merchant address
-                date, time
-                amount paid, taxes
-                payment details
-                category (not so sure yet)'''
-                merchName = tempData.get('merchant_name')
+                merchName = tempData.get('merchant_name') #gets the values from the dict
                 merchAddress = tempData.get('merchant_address')
                 date = tempData.get('date')
                 amount = tempData.get('total')
@@ -527,7 +563,7 @@ class PostCameraScreen(Screen):
             else:
                 arr = str(date).split('-')
 
-                temp = datetime.datetime(int(arr[0]), int(arr[1]), int(arr[2]))
+                temp = datetime(int(arr[0]), int(arr[1]), int(arr[2]))
                 day = temp.weekday()
                 s = str(amount)
                 amount = s.rstrip('0').rstrip('.') if '.' in s else s #removes trailing 0 to keep data consistent
@@ -633,13 +669,14 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
         self.text_input_email = self.ids['email'].text.strip() #gets values from text field
         self.text_input_pw = self.ids['pw'].text.strip()
         self.text_input_target = self.ids['limit'].text.strip()
+        self.text_input_saving = self.ids['saving'].text.strip()
         try: #data verfication
-            if self.text_input_email == '' or self.text_input_pw == '' or self.text_input_target == '':
+            if self.text_input_email == '' or self.text_input_pw == '' or self.text_input_target == '' or self.text_input_saving == '':
                 print('empty fields')
                 self.status_info = "Error! Empty fields."
             else:
 
-                str = "pw= {};target= {};data= [];receiptData= []".format(self.text_input_pw,self.text_input_target) #prepare the data into a string for the firebase set() func
+                str = "pw= {};target= {};data= [];receiptData= [];saving= {}".format(self.text_input_pw,self.text_input_target,self.text_input_saving) #prepare the data into a string for the firebase set() func
                 ref = db.collection(u'accounts')
                 if ref.document(self.text_input_email).get().exists: #prevents override of exisitng data
                     print("already exists!")
@@ -648,6 +685,8 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
                     self.status_info = "enter a valid email"
                 elif not float(self.text_input_target) >0:
                     self.status_info = 'Income must be more than 0'
+                elif not ((float(self.text_input_saving) >=20 and float(self.text_input_saving) <=70)):
+                    self.status_info = '% Saving must be >20% & <70%'
                 else:
                     ref.document(self.text_input_email).set(stringToDict(str)); #creates users data in database
                     self.status_info = "Success!"
@@ -659,6 +698,7 @@ class SignUpScreen(Screen): #screen property allows switch between, layout neste
                     self.ids['email'].text = ''
                     self.ids['pw'].text = '' #clears data 
                     self.ids['limit'].text = ''
+                    self.ids['saving'].text = ''
                     self.status_info = ''
                     self.manager.current = 'login'
         except AttributeError:
