@@ -76,6 +76,7 @@ tax = ''
 payMeth = ''
 mlStatusString = ''
 aslStatusString = ''
+totalDebt = 0
 def stringToDict(x): #converts json string into dict in python
     dictionary = dict(subString.split("=") for subString in x.split(";"))
     return(dictionary)
@@ -152,7 +153,7 @@ class MLGraph(BoxLayout):
                 plt.scatter(days_of_week, predictions)
                 plt.ylabel("Prediction Amount of Money Spent/$")
                 plt.xlabel("Days")
-                mlStatusString = "Predicted Spendings: ${},${},${},${},${}\n Previous Week's Spendings: ${}, ${}, ${}, ${}, ${}".format(round(predictions[0]),round(predictions[1]),round(predictions[2]),round(predictions[3]),round(predictions[4]),round(spending_array[0]),round(spending_array[1]),round(spending_array[2]),round(spending_array[3]),round(spending_array[4]))
+                mlStatusString = "Predicted Spendings: ${},${},${},${},${}\nPrevious Week's Spendings: ${}, ${}, ${}, ${}, ${}".format(round(predictions[0]),round(predictions[1]),round(predictions[2]),round(predictions[3]),round(predictions[4]),round(spending_array[0]),round(spending_array[1]),round(spending_array[2]),round(spending_array[3]),round(spending_array[4]))
                 self.add_widget(FigureCanvasKivyAgg(plt.gcf()))  
         else:
             plt.cla()
@@ -166,6 +167,7 @@ class FinanceGraph(BoxLayout):
     temp = []
     def plotASLGraph(self,dt):
         global aslStatusString
+        global totalDebt
         #plt figure 2 refers to the figure for ASLGraph
         plt.figure(2)
         doc_ref = db.collection(u'accounts').document(userEmail)
@@ -205,6 +207,7 @@ class FinanceGraph(BoxLayout):
             plt.legend(piechart, labels=labels, loc='lower left', prop={"size":7})
             self.add_widget(FigureCanvasKivyAgg(plt.gcf()))
             aslStatusString = 'Total Spent: ${}\nTotal Remaining: ${}\n Total Debt: ${}'.format(round(total,2),round(income_a-total,2),round(total_debt,2))
+            totalDebt = total_debt
     def __init__(self,**kwargs): 
         super().__init__(**kwargs)
         Clock.schedule_interval(self.plotASLGraph, 10)
@@ -384,7 +387,9 @@ class History(RecycleView):
 class NavigationScreen(Screen):
     pass
 class InputScreen(Screen):
+    status_info = StringProperty("")
     def submit_debt(self):
+        global totalDebt
         self.debtAmt = self.ids['debt'].text.strip() #gets value from input field
         global userEmail
         try: #data verfication
@@ -393,6 +398,8 @@ class InputScreen(Screen):
                 self.status_info = "Error! Empty field."
             elif not float(self.debtAmt) > 0:
                 self.status_info = "Debt Repayment Value must be more than 0"
+            elif not float(self.debtAmt) <= totalDebt:
+                self.status_info = "Debt Repayment Value must be less than or equal to current debt"
             else:
                 year = datetime.today().strftime('%Y')
                 month = datetime.today().strftime('%m')
@@ -544,7 +551,7 @@ class PostCameraScreen(Screen):
         self.time = 'Time: '+('-' if timeData is None else str(timeData))
         self.amount = 'Amount: '+('-' if amount is None else str(amount))
         self.tax = 'Tax: '+('-' if tax is None else str(tax))
-        self.payMeth = 'Payment Meth: '+('-' if payMeth is None else str(payMeth))
+        self.payMeth = 'Payment Method: '+('-' if payMeth is None else str(payMeth))
 
     def submitData(self): #submit in format -> [date, day, amt, tag]
         global userEmail

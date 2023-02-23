@@ -161,6 +161,7 @@ WindowManager:
         do_default_tab: False
         TabbedPanelItem:
             text: "ML Graph"
+            font_name: "ProductSansBold"
             BoxLayout:
                 canvas:
                     Color:
@@ -177,6 +178,7 @@ WindowManager:
                     font_name: "ProductSansBold"
         TabbedPanelItem:
             text: "ASL Graph"
+            font_name: "ProductSansBold"
             BoxLayout:
                 orientation: "vertical"
                 canvas:
@@ -282,19 +284,26 @@ WindowManager:
             font_name: "ProductSans"
             color: 0.1, 0.1, 0.7,1
             font_name: "ProductSansBold"
+        Label:
+            text: root.status_info
+            color: 0, 0, 0, 1
+            size_hint: 1,0.2
+            font_name: "ProductSansBold"
         BoxLayout:
             size_hint: 1,0.2
             orientation: "horizontal"
             TextInput:
-                hint_text: "Enter Debt ($)"
+                hint_text: "Enter Debt Repayment ($)"
                 multiline: False
                 input_filter: "float"
                 id: debt
+                font_name: "ProductSansBold"
             Button:
                 text: "Submit"
                 background_normal: ''
                 background_color: 0, 0, 0, .85
                 on_press: root.submit_debt()
+                font_name: "ProductSansBold"
         BoxLayout:
             
             orientation: "horizontal"

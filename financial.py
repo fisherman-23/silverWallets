@@ -88,9 +88,9 @@ def ASLModel(totalArr,income,savingPer):
                     total += spending
                 elif tag == 'debt':
                     spending = amt
-                    total_debt -= spending
+                    #total_debt -= spending
                     spending_y[day-1] += spending
-                    total += spending
+                    total -= spending
                 else:
                     spending = amt
                     extras += spending
