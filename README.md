@@ -1,9 +1,11 @@
-# silverWallets
- This app is developed as a FinTech app to help the older generations better manage their wealth. 
+# SilverWallets
+SilverWallets is a FinTech app specifically developed to cater to the elderly in Singapore, helping them to better manage their wealth.
 
-This app is built on the Python Kivy platform, utilising regression models trained via scikitlearn Python package.
-This model helps users to visuallise their expenditures through matplotlib's line graph and pie chart, while accurately predicting upcoming spendings, enabling pre-formulated advice to be given
-The app also features a receipt OCR to allow for easier input of data, and a Firebase backend to save user's data.
+This app is built on the Python Kivy platform, hosting a simple and clean UI. It utilizes regression models trained via scikitlearn Python package. This model helps to accurately predict users upcoming expenditures, plotting it on a scatter plot. Our Advisory Spending Limit system is designed to create a daily budget based on the income of the user, as well as comparing their spending habits against the general spending patterns of other Singaporeans and the government's official guideline. It is formulated based on real-world data provided by the Singaporean Government and independent researchers. It helps to visualize user's expenditures through matplotlib's line graph and pie chart. The app also features a receipt OCR to allow for easier input of data, and a Firebase backend to save user's data, enabling the sharing of accounts with family members and safeguarding it against digital threats.
+
+## Summary of Key Features
+<img width="1025" alt="Screenshot 2023-03-09 at 9 49 30 AM" src="https://user-images.githubusercontent.com/103990540/223894669-fda8d99d-26d2-4ea3-bd67-8c1844e386a1.png">
+
 
 ## Start, SignUp & Log In Screens
 <p float="left">
